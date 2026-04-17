@@ -2,6 +2,8 @@
 
 This document implements the analysis and architecture deliverable for [Dell_Idea Outline_Team X.pdf](Dell_Idea%20Outline_Team%20X.pdf).
 
+**See also:** [DATA_SOURCES_AND_TOOLS.md](DATA_SOURCES_AND_TOOLS.md) for data sources and tooling choices aligned with this design.
+
 ---
 
 ## 1. Requirements extracted from the outline
