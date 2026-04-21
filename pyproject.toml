@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-experimentation-agent"
+version = "0.1.0"
+description = "MVP starter for an adaptive experimentation recommendation agent"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Capstone Team" }]
+dependencies = [
+  "langgraph",
+  "langchain",
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2.0",
+  "pydantic-settings",
+  "sqlalchemy",
+  "asyncpg",
+  "psycopg2-binary",
+  "pandas",
+  "polars",
+  "statsmodels",
+  "scikit-learn",
+  "jupyter",
+  "pytest",
+]
+
+[project.optional-dependencies]
+vector = ["pgvector"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
