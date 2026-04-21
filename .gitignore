@@ -18,9 +18,20 @@ venv/
 
 # Env files
 .env
+.env.*
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Secrets and certs
+*.pem
+*.key
+credentials*.json
+*.p12
+*.pfx
+
+# Node / misc
+node_modules/
 
 # OS / IDE
 .DS_Store

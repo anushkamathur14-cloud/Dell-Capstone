@@ -70,6 +70,10 @@ Quick checks:
 
 - Architecture: `docs/architecture.md`
 
+## Legacy Repository Context
+
+- `Dell_Idea Outline_Team X.pdf`: initial project concept document from repository import.
+
 ## Next Priorities
 
 1. Implement real retrieval over SQL + memory store.
