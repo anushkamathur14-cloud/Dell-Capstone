@@ -62,7 +62,7 @@ def _score_outcomes(df: pd.DataFrame, seed: int) -> pd.DataFrame:
         -0.4
         + 1.1 * latent_engagement
         + 0.15 * is_core * (df["arm_id"] == "high_challenge").astype(float)
-        - 0.9 * delayed_tradeoff
+        - 2.6 * delayed_tradeoff
         - 0.35 * friction_penalty
     )
     d7_prob = 1 / (1 + np.exp(-d7_logit))
