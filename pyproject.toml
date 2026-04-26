@@ -20,10 +20,14 @@ dependencies = [
   "sqlalchemy",
   "asyncpg",
   "psycopg2-binary",
+  "numpy",
   "pandas",
   "polars",
+  "scipy",
   "statsmodels",
   "scikit-learn",
+  "pyyaml",
+  "matplotlib",
   "jupyter",
   "pytest",
 ]
@@ -32,8 +36,8 @@ dependencies = [
 vector = ["pgvector"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+pythonpath = ["src", "."]
+testpaths = ["tests", "synthetic_env/tests"]
 addopts = "-q"
 
 [tool.setuptools]

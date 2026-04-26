@@ -24,6 +24,7 @@ The project uses a modular, skill-based design with:
 - `src/config` for environment-based settings.
 
 Reference architecture: `docs/architecture.md`.
+Synthetic world blueprint: `docs/world_spec.md`.
 
 ## Setup Instructions
 
@@ -69,6 +70,20 @@ Quick checks:
 ## Where Docs Live
 
 - Architecture: `docs/architecture.md`
+- World spec: `docs/world_spec.md`
+- World config: `configs/world_spec.yaml`
+
+## Synthetic Benchmark Environment
+
+The synthetic experimentation subproject lives in `synthetic_env/` and provides a modular simulator-first stack for benchmark generation and validation.
+
+Run end-to-end generation:
+
+```bash
+python -c "from synthetic_env.pipeline import run_generation; run_generation()"
+```
+
+See `synthetic_env/README.md` for module details, validation approach, and TODOs.
 
 ## Legacy Repository Context
 

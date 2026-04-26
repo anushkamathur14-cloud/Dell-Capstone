@@ -1,0 +1,188 @@
+meta:
+  name: adaptive_experimentation_world
+  version: 0.1.0
+  default_realism_level: 1
+  default_objective: day7_retention
+
+segments:
+  - id: casual
+    share: 0.35
+    baseline_skill_mean: 0.35
+    engagement_propensity_mean: 0.45
+    spend_propensity_mean: 0.25
+    friction_tolerance_mean: 0.35
+  - id: core
+    share: 0.20
+    baseline_skill_mean: 0.75
+    engagement_propensity_mean: 0.70
+    spend_propensity_mean: 0.55
+    friction_tolerance_mean: 0.70
+  - id: value_seeker
+    share: 0.25
+    baseline_skill_mean: 0.50
+    engagement_propensity_mean: 0.55
+    spend_propensity_mean: 0.60
+    friction_tolerance_mean: 0.50
+  - id: new_explorer
+    share: 0.20
+    baseline_skill_mean: 0.30
+    engagement_propensity_mean: 0.50
+    spend_propensity_mean: 0.30
+    friction_tolerance_mean: 0.40
+
+user_attributes:
+  static:
+    acquisition_source: [organic, paid, referral, cross_sell]
+    baseline_skill: [0.0, 1.0]
+    spend_propensity: [0.0, 1.0]
+  slow:
+    lifecycle_stage: [new, maturing, established, at_risk]
+    engagement_propensity: [0.0, 1.0]
+    friction_tolerance: [0.0, 1.0]
+  dynamic:
+    recent_activity_score: [0.0, 1.0]
+    recent_sessions_7d: [0, 14]
+    churn_risk: [0.0, 1.0]
+
+treatment_parameters:
+  difficulty_shift:
+    type: continuous
+    min: -0.3
+    max: 0.3
+  reward_rate:
+    type: continuous
+    min: 0.5
+    max: 2.0
+  matchmaking_delay_sec:
+    type: continuous
+    min: 2.0
+    max: 45.0
+  ui_friction:
+    type: continuous
+    min: 0.0
+    max: 1.0
+  progression_speed:
+    type: continuous
+    min: 0.6
+    max: 1.8
+  content_exposure_intensity:
+    type: continuous
+    min: 0.2
+    max: 1.0
+  onboarding_support:
+    type: categorical
+    values: ["off", "light", "guided"]
+  promotion_intensity:
+    type: categorical
+    values: [none, soft, aggressive]
+
+example_arms:
+  control:
+    difficulty_shift: 0.0
+    reward_rate: 1.0
+    matchmaking_delay_sec: 12.0
+    ui_friction: 0.35
+    progression_speed: 1.0
+    content_exposure_intensity: 0.6
+    onboarding_support: light
+    promotion_intensity: none
+    constraints_tag: safe
+  fast_progression:
+    difficulty_shift: -0.05
+    reward_rate: 1.4
+    matchmaking_delay_sec: 10.0
+    ui_friction: 0.4
+    progression_speed: 1.4
+    content_exposure_intensity: 0.75
+    onboarding_support: light
+    promotion_intensity: soft
+    constraints_tag: growth
+  high_challenge:
+    difficulty_shift: 0.2
+    reward_rate: 0.9
+    matchmaking_delay_sec: 18.0
+    ui_friction: 0.25
+    progression_speed: 0.9
+    content_exposure_intensity: 0.7
+    onboarding_support: "off"
+    promotion_intensity: none
+    constraints_tag: expert
+  guided_onboarding:
+    difficulty_shift: -0.15
+    reward_rate: 1.1
+    matchmaking_delay_sec: 8.0
+    ui_friction: 0.2
+    progression_speed: 0.9
+    content_exposure_intensity: 0.55
+    onboarding_support: guided
+    promotion_intensity: soft
+    constraints_tag: onboarding
+
+constraints:
+  forbidden_combinations:
+    - rule: promotion_intensity == aggressive and ui_friction > 0.7
+    - rule: matchmaking_delay_sec > 35 and difficulty_shift > 0.2
+    - rule: reward_rate > 1.8 and progression_speed > 1.6
+  traffic_rules:
+    max_aggressive_traffic_share: 0.30
+    max_high_challenge_for_new_users: 0.20
+  risk_limits:
+    min_expected_satisfaction_proxy: 0.35
+
+kpis:
+  day1_retention:
+    type: binary_probability
+    timing: immediate
+    optimize_directly: false
+  day7_retention:
+    type: binary_probability
+    timing: delayed
+    optimize_directly: true
+  engagement_time:
+    type: continuous
+    timing: immediate_to_mid
+    optimize_directly: false
+  interaction_count:
+    type: count
+    timing: immediate
+    optimize_directly: false
+  monetization_proxy:
+    type: continuous
+    timing: immediate_to_mid
+    optimize_directly: false
+  satisfaction_proxy:
+    type: continuous
+    timing: immediate
+    optimize_directly: false
+
+causal_assumptions:
+  heterogeneous_effects: true
+  delayed_effects: true
+  non_trivial_tradeoffs: true
+  interaction_terms:
+    - baseline_skill * difficulty_shift
+    - friction_tolerance * ui_friction
+    - lifecycle_stage(new) * onboarding_support
+    - reward_rate * progression_speed
+  directional_effects:
+    - high_difficulty_helps_high_skill_users
+    - high_ui_friction_hurts_low_tolerance_users
+    - high_reward_rate_can_hurt_day7_retention
+    - guided_onboarding_benefits_new_users
+
+realism_levels:
+  level_1:
+    name: minimal_benchmark
+    segments: 4
+    delayed_effect_strength: low
+    event_complexity: basic
+  level_2:
+    name: realistic_benchmark
+    segments: 6
+    delayed_effect_strength: medium
+    event_complexity: medium
+  level_3:
+    name: extended_benchmark
+    segments: 8
+    delayed_effect_strength: high
+    event_complexity: advanced
