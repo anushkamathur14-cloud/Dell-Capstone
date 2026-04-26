@@ -32,6 +32,20 @@ Provide a deterministic, auditable benchmark world for:
 - `benchmarks/`: random and heuristic baselines + agent hooks
 - `pipeline.py`: end-to-end generation runner
 
+## Stochastic vs Deterministic Components
+
+The environment is intentionally hybrid: explicit deterministic structure plus controlled stochastic sampling.
+
+| Module | Function/Area | Type | Notes |
+|---|---|---|---|
+| `pipeline.py` | `run_generation(..., seed=...)` | Deterministic control | The seed is the reproducibility entrypoint for the full run. |
+| `synthetic_population/generator.py` | `generate_population()` | Stochastic | Uses `rng.choice`, `rng.normal`, and `rng.integers` for segment assignment and user attributes. |
+| `treatment_space/generator.py` | `generate_experiment_tables()` | Deterministic | Builds arms from world spec and applies fixed constraints. |
+| `outcome_simulator/simulator.py` | `_assign_arms()` | Stochastic | Randomized arm exposure assignment via `rng.choice`. |
+| `outcome_simulator/simulator.py` | `_score_outcomes()` | Mixed | Deterministic formulas plus noise (`rng.normal`) and retention draws (`rng.binomial`). |
+| `outcome_simulator/simulator.py` | `summarize_metrics()` | Deterministic | Pure aggregation and confidence interval calculations. |
+| `validation/checks.py` | Validation checks | Deterministic | Rule-based checks over generated data tables. |
+
 ## Run Generation
 
 From repo root:
