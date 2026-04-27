@@ -69,6 +69,7 @@ Quick checks:
 
 ## Where Docs Live
 
+- **Experimentation roadmap (this branch):** [`docs/EXPERIMENTATION_DEV_PLAN.md`](docs/EXPERIMENTATION_DEV_PLAN.md) — phased dev plan, data/mechanism flows
 - Architecture (runtime repo): `docs/architecture.md`
 - World spec: `docs/world_spec.md`
 - World config: `configs/world_spec.yaml`
