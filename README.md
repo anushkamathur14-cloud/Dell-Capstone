@@ -69,9 +69,10 @@ Quick checks:
 
 ## Where Docs Live
 
-- Architecture: `docs/architecture.md`
+- Architecture (runtime repo): `docs/architecture.md`
 - World spec: `docs/world_spec.md`
 - World config: `configs/world_spec.yaml`
+- Capstone knowledge base (outline traceability): [`ARCHITECTURE.md`](ARCHITECTURE.md) (phased execution: Foundation → closed loop → optional perception), [`DATA_SOURCES_AND_TOOLS.md`](DATA_SOURCES_AND_TOOLS.md)
 
 ## Synthetic Benchmark Environment
 
