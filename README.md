@@ -85,6 +85,29 @@ python -c "from synthetic_env.pipeline import run_generation; run_generation()"
 
 See `synthetic_env/README.md` for module details, validation approach, and TODOs.
 
+## Agent design and LangSmith (v1 onboarding)
+
+Architecture and trace naming for the coordinated multi-skill runtime:
+
+- `docs/agent_architecture.md` — system map, sync pipeline, persistence notes
+- `docs/langsmith_trace_plan.md` — env vars and canonical run names
+- `docs/skills_catalog.md` — per-skill purpose / inputs / outputs / traces
+
+Minimal traced demo (requires LangSmith vars in `.env`):
+
+```bash
+PYTHONPATH=src:. python scripts/run_traced_dummy_flow.py
+```
+
+Optional traced synthetic benchmark generation before the coordinator demo:
+
+```bash
+PYTHONPATH=src:. python scripts/run_traced_dummy_flow.py --with-benchmark
+```
+
+**Dataset**: public LangSmith hub entry for evaluations / benchmarks  
+[LangSmith dataset](https://smith.langchain.com/public/5932f940-296c-4e7a-b8fc-662111b8baa3/d)
+
 ## Legacy Repository Context
 
 - `Dell_Idea Outline_Team X.pdf`: initial project concept document from repository import.

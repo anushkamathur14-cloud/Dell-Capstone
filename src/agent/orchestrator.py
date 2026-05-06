@@ -4,6 +4,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.data.models import Experiment, ExperimentMemory, MetricsSummary
+from src.agent.traced_steps import (
+    run_causal_evaluation_skill,
+    run_experiment_generation_skill,
+    run_recommendation_skill,
+    run_retrieval_skill,
+    run_validation_skill,
+)
 from src.skills.causal_evaluation import CausalEvaluationSkill
 from src.skills.experiment_generation import ExperimentGenerationSkill
 from src.skills.recommendation import RecommendationSkill
@@ -30,15 +37,19 @@ class AdaptiveExperimentationOrchestrator:
         self.recommender = RecommendationSkill()
 
     def run(self, objective: str, experiment_id: str) -> OrchestrationResult:
-        context = self.retrieval.run(objective=objective, experiment_id=experiment_id)
-        validation_report = self.validation.run(context)
+        context = run_retrieval_skill(self.retrieval, objective=objective, experiment_id=experiment_id)
+        validation_report = run_validation_skill(self.validation, context)
 
         if validation_report["decision"] == "stop":
             raise ValueError("Validation failed: pipeline halted.")
 
-        evaluation = self.evaluator.run(context)
-        candidates = self.generator.run(context=context, evaluation=evaluation)
-        recommendation = self.recommender.run(candidates=candidates, evaluation=evaluation)
+        evaluation = run_causal_evaluation_skill(self.evaluator, context)
+        candidates = run_experiment_generation_skill(
+            self.generator, context=context, evaluation=evaluation
+        )
+        recommendation = run_recommendation_skill(
+            self.recommender, candidates=candidates, evaluation=evaluation
+        )
 
         return OrchestrationResult(
             experiment=context["experiment"],
