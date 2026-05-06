@@ -1,4 +1,10 @@
-"""Coordinator: routes objectives through skills with LangSmith-friendly run grouping."""
+"""Coordinator agent: entry point and LangSmith umbrella runs.
+
+This module does **not** duplicate pipeline logic. It groups traces and exposes:
+- **Canonical full pipeline** — delegates to ``AdaptiveExperimentationOrchestrator.run`` (five skills).
+- **Smoke / minimal trace flow** — onboarding-only shortcut (retrieval → validation → ranking
+  with fixed dummy eval/candidates); skips causal evaluation and experiment generation by design.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +16,11 @@ from src.observability.langsmith_trace import TraceNames
 
 
 class CoordinatorAgent:
-    """Thin coordinator for traced demo flows plus delegation to full orchestrator."""
+    """Outward-facing coordinator: umbrella LangSmith spans plus optional smoke flow.
+
+    - ``run_full_pipeline``: same contract as the orchestrator (see ``OrchestrationResult``).
+    - ``run_minimal_demo_flow``: **not** the canonical product path; use only for quick smokes.
+    """
 
     def __init__(self) -> None:
         self._orchestrator = AdaptiveExperimentationOrchestrator()
@@ -20,11 +30,12 @@ class CoordinatorAgent:
 
     @trace_named(TraceNames.COORDINATOR_RUN)
     def run_full_pipeline(self, objective: str, experiment_id: str) -> OrchestrationResult:
+        """Delegate to the orchestrator: canonical five-skill synchronous pipeline."""
         return self._orchestrator.run(objective=objective, experiment_id=experiment_id)
 
     @trace_named(TraceNames.COORDINATOR_MINIMAL_DEMO)
     def run_minimal_demo_flow(self, objective: str, experiment_id: str) -> dict[str, Any]:
-        """Retrieval → validation → recommendation stubs (quick LangSmith smoke test)."""
+        """Smoke only: retrieval → validation → recommendation with stub eval/candidates."""
 
         from src.agent.traced_steps import run_recommendation_skill, run_retrieval_skill, run_validation_skill
 
@@ -51,6 +62,7 @@ class CoordinatorAgent:
         )
         return {
             "status": "ok",
+            "flow": "smoke_minimal",
             "experiment_id": experiment_id,
             "objective": objective,
             "validation_report": validation_report,

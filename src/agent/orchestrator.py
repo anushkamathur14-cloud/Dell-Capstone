@@ -20,14 +20,24 @@ from src.skills.validation import ValidationSkill
 
 @dataclass
 class OrchestrationResult:
+    """Immutable bundle from the canonical five-skill pipeline (after validation passes)."""
+
     experiment: Experiment
     memory: ExperimentMemory
     metrics: list[MetricsSummary]
+    validation_report: dict[str, Any]
+    evaluation: dict[str, Any]
+    candidates: list[dict[str, Any]]
     recommendation: dict[str, Any]
 
 
 class AdaptiveExperimentationOrchestrator:
-    """Coordinates modular skills in a recommendation-first sequence."""
+    """Wires retrieval → validation → causal evaluation → generation → ranking in order.
+
+    Owns the canonical synchronous pipeline and constructs ``OrchestrationResult``.
+    LangSmith skill-level traces are applied in ``traced_steps``; callers that need an
+    umbrella span use ``CoordinatorAgent.run_full_pipeline``.
+    """
 
     def __init__(self) -> None:
         self.retrieval = RetrievalSkill()
@@ -55,5 +65,8 @@ class AdaptiveExperimentationOrchestrator:
             experiment=context["experiment"],
             memory=context["memory"],
             metrics=context["metrics"],
+            validation_report=validation_report,
+            evaluation=evaluation,
+            candidates=candidates,
             recommendation=recommendation,
         )

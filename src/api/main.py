@@ -25,5 +25,8 @@ def orchestrate(experiment_id: str, objective: str) -> dict:
         "experiment": result.experiment.model_dump(),
         "memory": result.memory.model_dump(),
         "metrics": [metric.model_dump() for metric in result.metrics],
+        "validation_report": result.validation_report,
+        "evaluation": result.evaluation,
+        "candidates": result.candidates,
         "recommendation": result.recommendation,
     }

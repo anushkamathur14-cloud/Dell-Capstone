@@ -22,7 +22,22 @@ Backward compatibility: legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` may 
 
 ---
 
-## Run naming convention (canonical)
+## Canonical full pipeline vs smoke minimal flow
+
+These are **different** call paths in code; trace trees should not be compared one-to-one.
+
+| | **Canonical full pipeline** | **Smoke minimal flow** |
+|--|----------------------------|-------------------------|
+| **Code** | `AdaptiveExperimentationOrchestrator.run` or `CoordinatorAgent.run_full_pipeline` | `CoordinatorAgent.run_minimal_demo_flow` |
+| **Umbrella span** | `coordinator_run` (if using coordinator); direct orchestrator calls omit it | `coordinator_minimal_demo` |
+| **Child skills** | `retrieval_skill` → `validation_skill` → `causal_evaluation_skill` → `experiment_generation_skill` → `recommendation_agent_v1` | `retrieval_skill` → `validation_skill` → `recommendation_agent_v1` only |
+| **Outcome** | `OrchestrationResult` (includes validation, evaluation, candidates, recommendation) | Plain `dict` with `flow: "smoke_minimal"` |
+
+Use smoke flow only for LangSmith wiring checks and onboarding — **not** for benchmark or product evaluation.
+
+---
+
+## Run naming convention (unchanged)
 
 Defined in code as `TraceNames` in `src/observability/langsmith_trace.py`:
 
@@ -34,14 +49,13 @@ Defined in code as `TraceNames` in `src/observability/langsmith_trace.py`:
 | `causal_evaluation_skill` | Deterministic effect / lift stub |
 | `experiment_generation_skill` | Structured candidate proposals (stub today) |
 | `recommendation_agent_v1` | Ranking output |
-| `coordinator_run` | Full orchestrator-backed pipeline wrapped by coordinator |
-| `coordinator_minimal_demo` | Quick smoke: retrieval → validation → recommendation stub |
+| `coordinator_run` | Umbrella: full orchestrator-backed pipeline when invoked via coordinator |
+| `coordinator_minimal_demo` | Umbrella: smoke path (partial skills) |
 
-Minimum viable spans for demos:
+Suggested minimum for **full** demos:
 
 1. `benchmark_generation` (optional, when generating data)
-2. `retrieval_skill` → `validation_skill` → … → `recommendation_agent_v1`
-3. `coordinator_run` or `coordinator_minimal_demo` as umbrella
+2. Under `coordinator_run`: full sequence of five skill names above
 
 ---
 
@@ -58,8 +72,10 @@ With optional traced benchmark writes:
 PYTHONPATH=src:. python scripts/run_traced_dummy_flow.py --with-benchmark
 ```
 
+The default script runs the **smoke** path. For the **canonical full pipeline** with a `coordinator_run` span, invoke `CoordinatorAgent.run_full_pipeline` (or the API `POST /orchestrate/...`, which uses the orchestrator directly).
+
 ---
 
 ## Nested structure
 
-Coordinator runs nest skill runs automatically when decorators record child spans (LangSmith + `traceable`). For precise tree layout, iterate on tagging once real LangGraph wiring lands.
+Coordinator runs nest skill runs when `traceable` records child spans. For precise tree layout, refine tags later; **no LangGraph nodes in v1 scaffold**.
