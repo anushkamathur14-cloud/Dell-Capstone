@@ -1,6 +1,6 @@
 # Agent system map (v1)
 
-Recommendation-first adaptive experimentation: five **skills** in sequence, surfaced as separate LangSmith spans. The **orchestrator** owns the canonical wired pipeline; the **coordinator** is the outward entry point and attaches umbrella traces without duplicating business logic.
+Recommendation-first adaptive experimentation on a **thin canonical path**: retrieval → validation → causal evaluation → recommendation. Skill boundaries remain LangSmith-visible via `TraceNames` in [`src/observability/langsmith_trace.py`](../src/observability/langsmith_trace.py). **Team-facing implementation plan**: [`implementation_plan_v1.md`](implementation_plan_v1.md).
 
 Public reference dataset (evaluation / examples):
 
@@ -12,25 +12,29 @@ Public reference dataset (evaluation / examples):
 
 | Component | Role |
 |-----------|------|
-| **`AdaptiveExperimentationOrchestrator`** (`src/agent/orchestrator.py`) | **Canonical pipeline owner**: calls retrieval → validation → causal evaluation → experiment generation → recommendation in order; builds **`OrchestrationResult`** (experiment context, `validation_report`, `evaluation`, `candidates`, final `recommendation`). |
-| **`CoordinatorAgent`** (`src/agent/coordinator.py`) | **Entry + trace grouping**: `run_full_pipeline` **delegates** to the orchestrator (same result type). `run_minimal_demo_flow` is a **smoke-only** shortcut (see below), not the product path. |
+| **`AdaptiveExperimentationOrchestrator`** (`src/agent/orchestrator.py`) | **Canonical pipeline owner (v1)**: retrieval → validation → causal evaluation → recommendation; constructs **`OrchestrationResult`**. Experiment **generation is not invoked** here (Phase 2 / Slice D). |
+| **`CoordinatorAgent`** (`src/agent/coordinator.py`) | **Entry + umbrella traces**: `run_full_pipeline` delegates to the orchestrator. `run_minimal_demo_flow` is **smoke-only** — not benchmarked against the canonical path. |
 
-Services can call the orchestrator directly (e.g. FastAPI) or go through the coordinator when you want an explicit `coordinator_run` parent span in LangSmith.
+Services can call the orchestrator directly (e.g. FastAPI) or the coordinator when an explicit **`coordinator_run`** parent span is desired.
 
 ---
 
 ## Two execution paths (must not be conflated)
 
-| Path | Entry | Skills exercised | Result |
-|------|--------|------------------|--------|
-| **Canonical full pipeline** | `CoordinatorAgent.run_full_pipeline` or `AdaptiveExperimentationOrchestrator.run` | All five skills | `OrchestrationResult` |
-| **Smoke / minimal trace flow** | `CoordinatorAgent.run_minimal_demo_flow` | Retrieval → validation → recommendation only (dummy eval + candidates) | `dict` with `flow: "smoke_minimal"` |
+| Path | Entry | Runs | Benchmark v1 relevance |
+|------|--------|------|-------------------------|
+| **Canonical v1** | `AdaptiveExperimentationOrchestrator.run` or `CoordinatorAgent.run_full_pipeline` | retrieval → validation → causal evaluation → recommendation | **Yes** — this is the path slices A–F implement against the frozen baseline |
+| **Smoke / minimal** | `CoordinatorAgent.run_minimal_demo_flow` | retrieval → validation → recommendation (stub eval/candidates; **skips causal**) | **No** — LangSmith onboarding / sanity only |
 
-LangSmith: full pipeline uses **`coordinator_run`** (when using the coordinator) plus child skill names; smoke flow uses **`coordinator_minimal_demo`** and **only** fires `retrieval_skill`, `validation_skill`, and `recommendation_agent_v1` — not causal or generation.
+Canonical LangSmith child spans (`coordinator_run` umbrella when using coordinator): `retrieval_skill`, `validation_skill`, `causal_evaluation_skill`, `recommendation_agent_v1`.
+
+Smoke umbrella: **`coordinator_minimal_demo`** — fires only **`retrieval_skill`**, **`validation_skill`**, **`recommendation_agent_v1`** (no **`causal_evaluation_skill`**).
+
+**`experiment_generation_skill`**: retained for Slice D; **does not execute** on the canonical path in v1 (no span emitted there).
 
 ---
 
-## High-level flow — canonical full pipeline (synchronous)
+## High-level flow — canonical v1 (synchronous)
 
 ```mermaid
 flowchart LR
@@ -38,12 +42,13 @@ flowchart LR
   O --> R[Retrieval]
   R --> V[Validation]
   V --> E[Causal Evaluation]
-  E --> G[Experiment Generation]
-  G --> Rank[Recommendation ranking]
+  E --> Rank[Recommendation ranking]
   Rank --> Out[OrchestrationResult]
 ```
 
-Optional umbrella (same graph, different first hop):
+Proposal layer (**experiment generation**) branches here in **Phase 2** only (`docs/implementation_plan_v1.md`).
+
+Optional coordinator umbrella:
 
 ```mermaid
 flowchart LR
@@ -52,48 +57,41 @@ flowchart LR
   O2 --> Out2[OrchestrationResult]
 ```
 
-**Default**: sequential, synchronous, single process. Async / distributed orchestration is out of scope for v1.
+Sequential, synchronous, single process — no RL, no swarm orchestration.
 
 ---
 
 ## OrchestrationResult (contract)
 
-Returned on successful full runs (after validation allows proceed). Includes:
+On success (validation not `stop`):
 
-- **`experiment`**, **`memory`**, **`metrics`** — context from retrieval layer
-- **`validation_report`** — quality gate output
-- **`evaluation`** — causal / lift layer output
-- **`candidates`** — generation layer output
-- **`recommendation`** — ranked next actions
+- **`experiment`**, **`memory`**, **`metrics`** — retrieval context
+- **`validation_report`** — quality gate
+- **`evaluation`** — causal / stats layer artifact
+- **`candidates`** — **v1:** ranking envelope built from retrieval (`src/agent/ranking_inputs.py`). **Phase 2:** may include proposal-layer outputs; same schema contract.
+- **`recommendation`** — ranked next actions bundle
 
-If validation returns `stop`, the orchestrator raises (no partial `OrchestrationResult` in v1).
+Validation **`stop`** still raises — no partial `OrchestrationResult` in v1.
 
 ---
 
 ## LangSmith placement
 
-Skill boundaries: `src/agent/traced_steps.py`. Coordinator umbrellas: `CoordinatorAgent`. Canonical names: [`docs/langsmith_trace_plan.md`](langsmith_trace_plan.md).
+`src/agent/traced_steps.py` for skill decorators; **`CoordinatorAgent`** for umbrellas. Naming: [`langsmith_trace_plan.md`](langsmith_trace_plan.md).
 
 ---
 
-## Persistence (team decision recap)
+## Persistence (recap)
 
 | Phase | Persistence |
 |-------|-------------|
-| **v1** | Parquet / structured files (synthetic benchmark + local artifacts); no mandatory Postgres for agent runs. |
-| **v1.1+** | Optional Postgres for experiment memory and retrieval-heavy workloads. |
+| **v1** | Benchmark Parquet/files; Postgres optional later |
+| **v1.1+** | Optional Postgres for memory / retrieval at scale |
 
-UI (e.g. CopilotKit) is **phase 2** — not required for traced agent demos.
+UI (CopilotKit, etc.) is **out of v1**.
 
 ---
 
-## LLM provider (single choice for early protos)
+## LLM provider (early protos later)
 
-Pick **one** provider for LangChain / LangGraph v1 scaffolding so traces and tooling stay consistent:
-
-| Option | Typical use |
-|--------|--------------|
-| **OpenAI** (default recommendation) | Fast LangChain ergonomics for structured JSON and graph nodes |
-| **Anthropic** | Strong alternative when the team prefers Claude for reasoning-heavy generation |
-
-Defer multi-provider routing until after retrieval + benchmarks are wired.
+Defer until Slice D/E require real calls; stubs remain deterministic until then. See [`implementation_plan_v1.md`](implementation_plan_v1.md) out-of-scope section.

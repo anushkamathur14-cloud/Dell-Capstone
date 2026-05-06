@@ -1,18 +1,27 @@
-"""Agent orchestrator stub for the MVP workflow."""
+"""Agent orchestrator: canonical v1 deterministic path (thin, sequential).
+
+Canonical wiring (benchmarked path):
+retrieval → validation → causal evaluation → recommendation
+
+Experiment generation stays a separate module / trace name for Phase 2; it is **not**
+invoked here. Ranking inputs are assembled from retrieval context — see ``ranking_inputs``.
+"""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
 
+from src.agent.ranking_inputs import ranking_candidates_from_context
 from src.data.models import Experiment, ExperimentMemory, MetricsSummary
 from src.agent.traced_steps import (
     run_causal_evaluation_skill,
-    run_experiment_generation_skill,
     run_recommendation_skill,
     run_retrieval_skill,
     run_validation_skill,
 )
 from src.skills.causal_evaluation import CausalEvaluationSkill
-from src.skills.experiment_generation import ExperimentGenerationSkill
+from src.skills.experiment_generation import ExperimentGenerationSkill  # Slice D stub; unused in canonical v1 path
 from src.skills.recommendation import RecommendationSkill
 from src.skills.retrieval import RetrievalSkill
 from src.skills.validation import ValidationSkill
@@ -20,7 +29,7 @@ from src.skills.validation import ValidationSkill
 
 @dataclass
 class OrchestrationResult:
-    """Immutable bundle from the canonical five-skill pipeline (after validation passes)."""
+    """Bundle from canonical v1 runs (after validation ``go``/``caution`` — ``stop`` raises)."""
 
     experiment: Experiment
     memory: ExperimentMemory
@@ -32,18 +41,18 @@ class OrchestrationResult:
 
 
 class AdaptiveExperimentationOrchestrator:
-    """Wires retrieval → validation → causal evaluation → generation → ranking in order.
+    """Owns synchronous canonical v1: retrieval → validation → causal evaluation → recommendation.
 
-    Owns the canonical synchronous pipeline and constructs ``OrchestrationResult``.
-    LangSmith skill-level traces are applied in ``traced_steps``; callers that need an
-    umbrella span use ``CoordinatorAgent.run_full_pipeline``.
+    ``self.generator`` is retained as a Slice D anchor (callable elsewhere / tests); the
+    default ``run`` path does **not** call it. LangSmith: ``experiment_generation_skill``
+    trace does not appear in canonical runs until Phase 2.
     """
 
     def __init__(self) -> None:
         self.retrieval = RetrievalSkill()
         self.validation = ValidationSkill()
         self.evaluator = CausalEvaluationSkill()
-        self.generator = ExperimentGenerationSkill()
+        self.generator = ExperimentGenerationSkill()  # Deferred from canonical orchestration (Slice D).
         self.recommender = RecommendationSkill()
 
     def run(self, objective: str, experiment_id: str) -> OrchestrationResult:
@@ -54,11 +63,13 @@ class AdaptiveExperimentationOrchestrator:
             raise ValueError("Validation failed: pipeline halted.")
 
         evaluation = run_causal_evaluation_skill(self.evaluator, context)
-        candidates = run_experiment_generation_skill(
-            self.generator, context=context, evaluation=evaluation
-        )
+        signal = (evaluation.get("ranked_directions") or ["baseline"])[0]
+        ranking_inputs = ranking_candidates_from_context(context)
+        for item in ranking_inputs:
+            item["signal_from_eval"] = signal
+
         recommendation = run_recommendation_skill(
-            self.recommender, candidates=candidates, evaluation=evaluation
+            self.recommender, candidates=ranking_inputs, evaluation=evaluation
         )
 
         return OrchestrationResult(
@@ -67,6 +78,6 @@ class AdaptiveExperimentationOrchestrator:
             metrics=context["metrics"],
             validation_report=validation_report,
             evaluation=evaluation,
-            candidates=candidates,
+            candidates=ranking_inputs,
             recommendation=recommendation,
         )

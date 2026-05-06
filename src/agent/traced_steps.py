@@ -48,6 +48,7 @@ def run_causal_evaluation_skill(skill: Any, context: dict) -> dict:
 
 @_maybe_traceable(TraceNames.EXPERIMENT_GENERATION_SKILL)
 def run_experiment_generation_skill(skill: Any, *, context: dict, evaluation: dict) -> list[dict]:
+    """Slice D / Phase 2 — not invoked on canonical v1 orchestration path."""
     return skill.run(context=context, evaluation=evaluation)
 
 

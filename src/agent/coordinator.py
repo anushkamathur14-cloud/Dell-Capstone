@@ -1,7 +1,7 @@
 """Coordinator agent: entry point and LangSmith umbrella runs.
 
 This module does **not** duplicate pipeline logic. It groups traces and exposes:
-- **Canonical full pipeline** — delegates to ``AdaptiveExperimentationOrchestrator.run`` (five skills).
+- **Canonical full pipeline** — delegates to ``AdaptiveExperimentationOrchestrator.run`` (four skills: retrieval → validation → causal evaluation → recommendation).
 - **Smoke / minimal trace flow** — onboarding-only shortcut (retrieval → validation → ranking
   with fixed dummy eval/candidates); skips causal evaluation and experiment generation by design.
 """
@@ -30,7 +30,7 @@ class CoordinatorAgent:
 
     @trace_named(TraceNames.COORDINATOR_RUN)
     def run_full_pipeline(self, objective: str, experiment_id: str) -> OrchestrationResult:
-        """Delegate to the orchestrator: canonical five-skill synchronous pipeline."""
+        """Delegate to the orchestrator: canonical four-skill synchronous pipeline (v1)."""
         return self._orchestrator.run(objective=objective, experiment_id=experiment_id)
 
     @trace_named(TraceNames.COORDINATOR_MINIMAL_DEMO)

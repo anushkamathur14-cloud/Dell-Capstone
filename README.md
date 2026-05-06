@@ -8,8 +8,8 @@ The MVP focuses on:
 
 - data ingestion and contracts,
 - validation and deterministic evaluation,
-- candidate generation,
-- explainable recommendation ranking.
+- recommendation ranking from benchmark-derived evidence,
+- deferred proposal-generation layer (Slice D / Phase 2).
 
 It intentionally avoids autonomous production execution in v1.
 
@@ -70,6 +70,8 @@ Quick checks:
 ## Where Docs Live
 
 - Architecture: `docs/architecture.md`
+- **v1 implementation plan (team split):** `docs/implementation_plan_v1.md`
+- Agent system map / LangSmith: `docs/agent_architecture.md`, `docs/langsmith_trace_plan.md`, `docs/skills_catalog.md`
 - World spec: `docs/world_spec.md`
 - World config: `configs/world_spec.yaml`
 
@@ -89,6 +91,7 @@ See `synthetic_env/README.md` for module details, validation approach, and TODOs
 
 Architecture and trace naming for the coordinated multi-skill runtime:
 
+- `docs/implementation_plan_v1.md` — milestones, slices, contracts, acceptance tests
 - `docs/agent_architecture.md` — system map, sync pipeline, persistence notes
 - `docs/langsmith_trace_plan.md` — env vars and canonical run names
 - `docs/skills_catalog.md` — per-skill purpose / inputs / outputs / traces

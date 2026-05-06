@@ -1,10 +1,12 @@
 # LangSmith trace plan
 
-**Goal**: every logical step appears as a clear, repeatable run in LangSmith so the group can sanity-check pipelines and compare iterations.
+**Goal:** repeatable runs for review and regression. **Canonical v1** path is the only path used for benchmark evaluation; **smoke** is for wiring checks only.
 
-Shared public dataset hub (tie-in with capstone evaluations):
+Shared public dataset:
 
 - [LangSmith public dataset](https://smith.langchain.com/public/5932f940-296c-4e7a-b8fc-662111b8baa3/d)
+
+Team split + milestones: **[`implementation_plan_v1.md`](implementation_plan_v1.md)**.
 
 ---
 
@@ -12,70 +14,68 @@ Shared public dataset hub (tie-in with capstone evaluations):
 
 | Variable | Purpose |
 |---------|---------|
-| `LANGSMITH_API_KEY` | Authenticate uploads to LangSmith |
+| `LANGSMITH_API_KEY` | Authenticate uploads |
 | `LANGSMITH_TRACING` | `"true"` to send traces |
 | `LANGSMITH_PROJECT` | e.g. `dell-capstone-adaptive-exp-agent` |
 
-Recommended project name convention: **`dell-capstone-adaptive-exp-agent`**.
-
-Backward compatibility: legacy `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` may still appear in tooling; prefer `LANGSMITH_*` for new work.
+Legacy LangChain vars may still work alongside; prefer **`LANGSMITH_*`**.
 
 ---
 
-## Canonical full pipeline vs smoke minimal flow
+## Canonical v1 vs smoke minimal flow
 
-These are **different** call paths in code; trace trees should not be compared one-to-one.
-
-| | **Canonical full pipeline** | **Smoke minimal flow** |
-|--|----------------------------|-------------------------|
+| | **Canonical v1** (benchmarked path) | **Smoke minimal flow** |
+|--|--------------------------------------|-------------------------|
 | **Code** | `AdaptiveExperimentationOrchestrator.run` or `CoordinatorAgent.run_full_pipeline` | `CoordinatorAgent.run_minimal_demo_flow` |
-| **Umbrella span** | `coordinator_run` (if using coordinator); direct orchestrator calls omit it | `coordinator_minimal_demo` |
-| **Child skills** | `retrieval_skill` → `validation_skill` → `causal_evaluation_skill` → `experiment_generation_skill` → `recommendation_agent_v1` | `retrieval_skill` → `validation_skill` → `recommendation_agent_v1` only |
-| **Outcome** | `OrchestrationResult` (includes validation, evaluation, candidates, recommendation) | Plain `dict` with `flow: "smoke_minimal"` |
+| **Umbrella** | **`coordinator_run`** if using coordinator; direct orchestrator = no umbrella | **`coordinator_minimal_demo`** |
+| **Skills traced** | `retrieval_skill` → `validation_skill` → `causal_evaluation_skill` → `recommendation_agent_v1` | `retrieval_skill` → `validation_skill` → `recommendation_agent_v1` (**no causal**) |
+| **Outcome** | `OrchestrationResult` | `{ "flow": "smoke_minimal", … }` |
+| **`experiment_generation_skill`** | **Never** on canonical v1 runs (Phase 2) | **Never** |
 
-Use smoke flow only for LangSmith wiring checks and onboarding — **not** for benchmark or product evaluation.
+Do **not** compare smoke traces to canonical v1 timelines.
 
 ---
 
-## Run naming convention (unchanged)
+## Run naming convention (`TraceNames` — unchanged literals)
 
-Defined in code as `TraceNames` in `src/observability/langsmith_trace.py`:
+Defined in **`src/observability/langsmith_trace.py`**:
 
-| Trace name (`name=`) | When it fires |
-|----------------------|----------------|
-| `benchmark_generation` | Full synthetic parquet generation (`synthetic_env/traced_pipeline.py`) |
-| `retrieval_skill` | Loads / assembles benchmark + memory context |
-| `validation_skill` | Data-quality gate |
-| `causal_evaluation_skill` | Deterministic effect / lift stub |
-| `experiment_generation_skill` | Structured candidate proposals (stub today) |
-| `recommendation_agent_v1` | Ranking output |
-| `coordinator_run` | Umbrella: full orchestrator-backed pipeline when invoked via coordinator |
-| `coordinator_minimal_demo` | Umbrella: smoke path (partial skills) |
+| Trace name | When emitted |
+|-----------|----------------|
+| `benchmark_generation` | Synthetic parquet pipeline (`synthetic_env/traced_pipeline.py`) |
+| `retrieval_skill` | Canonical v1 step 1 |
+| `validation_skill` | Canonical v1 step 2 |
+| `causal_evaluation_skill` | Canonical v1 step 3 |
+| `recommendation_agent_v1` | Canonical v1 step 4 (smoke skips causal but still emits this third child) |
+| `experiment_generation_skill` | **Deferred** until Slice D wires proposal layer into orchestration |
+| `coordinator_run` | Umbrella over canonical v1 when using coordinator |
+| `coordinator_minimal_demo` | Umbrella over smoke path |
 
-Suggested minimum for **full** demos:
-
-1. `benchmark_generation` (optional, when generating data)
-2. Under `coordinator_run`: full sequence of five skill names above
+**Minimum trace set for a benchmarked demo:** four skill names above (plus optional `coordinator_run`).
 
 ---
 
 ## How to run locally
 
+Smoke (default script):
+
 ```bash
-# .env populated (see repo .env.example)
 PYTHONPATH=src:. python scripts/run_traced_dummy_flow.py
 ```
 
-With optional traced benchmark writes:
+Canonical v1 with coordinator umbrella:
+
+- Call `CoordinatorAgent().run_full_pipeline(...)` **or**
+- API `POST /orchestrate/...` (orchestrator only — umbrella omitted unless routed through coordinator).
+
+Benchmark generation (optional, separate subtree):
 
 ```bash
 PYTHONPATH=src:. python scripts/run_traced_dummy_flow.py --with-benchmark
 ```
 
-The default script runs the **smoke** path. For the **canonical full pipeline** with a `coordinator_run` span, invoke `CoordinatorAgent.run_full_pipeline` (or the API `POST /orchestrate/...`, which uses the orchestrator directly).
-
 ---
 
 ## Nested structure
 
-Coordinator runs nest skill runs when `traceable` records child spans. For precise tree layout, refine tags later; **no LangGraph nodes in v1 scaffold**.
+Child spans nest under umbrellas when `@traceable` composes LangSmith contexts. LangGraph visualization is explicitly **post–v1** unless team reopens scope.

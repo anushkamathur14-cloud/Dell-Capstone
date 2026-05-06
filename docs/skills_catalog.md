@@ -1,109 +1,110 @@
-# Skills catalog (Claude Harness–style summaries)
+# Skills catalog (Harness-style)
 
-Trace names refer to LangSmith span names (`src/observability/langsmith_trace.py`).
+Trace names live in [`src/observability/langsmith_trace.py`](../src/observability/langsmith_trace.py). **Implementation slicing:** [`implementation_plan_v1.md`](implementation_plan_v1.md).
 
 ---
 
-## Where skills run: full pipeline vs smoke
+## Where skills run: canonical v1 vs smoke
 
-| | **Canonical full pipeline** | **Smoke minimal** (`CoordinatorAgent.run_minimal_demo_flow`) |
-|--|----------------------------|---------------------------------------------------------------|
-| **Owner** | `AdaptiveExperimentationOrchestrator.run` | Coordinator only (does not call orchestrator `run`) |
-| **Skills invoked** | All five below | Retrieval, validation, recommendation only (stub eval + candidates) |
+| | **Canonical v1** (`AdaptiveExperimentationOrchestrator.run`) | **Smoke** (`CoordinatorAgent.run_minimal_demo_flow`) |
+|--|------------------------------------------------------------|------------------------------------------------------|
+| **Purpose** | Benchmarked deterministic path | Tracing onboarding only |
+| **Steps** | retrieval → validation → causal evaluation → recommendation | retrieval → validation → recommendation (stub eval/candidates); **causal omitted** |
 
-The **orchestrator** is the single source of truth for the full five-step wiring. The **coordinator** adds umbrella traces and the optional smoke shortcut.
+The orchestrator owns **canonical v1**. The coordinator adds umbrella spans (`coordinator_run` / `coordinator_minimal_demo`).
 
 ---
 
 ## 1. Retrieval (`retrieval_skill`)
 
-| Item | Detail |
+| Field | Detail |
 |------|--------|
-| **Purpose** | Gather relevant experiment history and context buckets for downstream validation and evaluation |
-| **Input** | `objective`, `experiment_id`; later: filters, segment, DB / parquet paths |
-| **Logic / tools** | Today: deterministic stub tables; roadmap: parquet / SQL loaders |
-| **Output** | `dict` with `experiment`, `arms`, `memory`, `metrics` |
+| **Purpose** | Load / assemble benchmark + experiment context behind one retrieval bundle |
+| **Input** | `objective`, `experiment_id`; future: repo paths / filters |
+| **Output** | `dict`: `experiment`, `arms`, `memory`, `metrics` |
 | **LangSmith** | `retrieval_skill` |
-| **Full pipeline** | Yes |
+| **Canonical v1** | Yes |
 | **Smoke** | Yes |
+| **Status** | Stub in-memory shapes; Slice A replaces with parquet adapter |
 
 ---
 
 ## 2. Validation (`validation_skill`)
 
-| Item | Detail |
+| Field | Detail |
 |------|--------|
-| **Purpose** | Block unusable experiments (traffic split missing, metrics empty, …) |
+| **Purpose** | Structural / quality gate (world_spec alignment in Slice E) |
 | **Input** | Retrieval context bundle |
-| **Logic** | Rules + flags (`go` / `caution` / `stop`) |
-| **Output** | `validation_report` dict |
+| **Output** | `validation_report` (`decision`, `issues`) |
 | **LangSmith** | `validation_skill` |
-| **Full pipeline** | Yes; on `stop`, orchestrator raises |
+| **Canonical v1** | Yes |
 | **Smoke** | Yes |
+| **Status** | Minimal rules stub; Slice E hardens |
 
 ---
 
 ## 3. Causal evaluation (`causal_evaluation_skill`)
 
-| Item | Detail |
+| Field | Detail |
 |------|--------|
-| **Purpose** | Auditable uplift / heterogeneity scaffolding (statistics-first, LLM-last) |
+| **Purpose** | Auditable effects / uncertainty summaries |
 | **Input** | Retrieval context bundle |
-| **Logic** | Deterministic stubs today; roadmap: statsmodels / sklearn summaries |
-| **Output** | `evaluation` dict (lift, uncertainty, hints) — part of `OrchestrationResult` |
+| **Output** | `evaluation` dict (lift, uncertainty, hints) |
 | **LangSmith** | `causal_evaluation_skill` |
-| **Full pipeline** | Yes |
-| **Smoke** | **No** |
+| **Canonical v1** | Yes |
+| **Smoke** | No |
+| **Status** | Deterministic stub; Slice B deepens |
 
 ---
 
-## 4. Experiment generation (`experiment_generation_skill`)
+## 4. Recommendation ranking (`recommendation_agent_v1`)
 
-| Item | Detail |
+| Field | Detail |
 |------|--------|
-| **Purpose** | Propose structured next experiments (constraints-aware) |
-| **Input** | Context + causal evaluation artifact |
-| **Logic** | Deterministic stubs; roadmap: LLM with strict JSON schema |
-| **Output** | `candidates` list — part of `OrchestrationResult` |
-| **LangSmith** | `experiment_generation_skill` |
-| **Full pipeline** | Yes |
-| **Smoke** | **No** |
-
----
-
-## 5. Recommendation ranking (`recommendation_agent_v1`)
-
-| Item | Detail |
-|------|--------|
-| **Purpose** | Score order and surface top-next actions with explicit dimensions |
-| **Input** | Candidates + evaluation |
-| **Logic** | Rule / score blend (stub today) |
-| **Output** | `top_recommendation`, `ranked_candidates` — part of `OrchestrationResult` |
+| **Purpose** | Score / rank **next-best actions from evidence** |
+| **Input** | Ranking envelope (`candidates` list + `evaluation`) |
+| **Output** | `top_recommendation`, `ranked_candidates` |
 | **LangSmith** | `recommendation_agent_v1` |
-| **Full pipeline** | Yes |
+| **Canonical v1** | Yes (inputs from retrieval-derived envelope in v1) |
 | **Smoke** | Yes (dummy inputs) |
+| **Status** | Heuristic stub; Slice C replaces policy |
 
 ---
 
-## Coordinator umbrella spans (unchanged names)
+## 5. Experiment generation (`experiment_generation_skill`) — **Phase 2 / Slice D**
+
+| Field | Detail |
+|------|--------|
+| **Purpose** | Schema-constrained new experiment proposals |
+| **Input** | Context + evaluation |
+| **Output** | Structured `candidates` (must align with eventual recommendation input contract) |
+| **LangSmith** | `experiment_generation_skill` — **not emitted on canonical v1 runs** |
+| **Canonical v1** | **Deferred** (`ExperimentGenerationSkill` exists; orchestrator does not call it) |
+| **Smoke** | No |
+| **Status** | Module stub only; awaits Slice D + contract sign-off |
+
+---
+
+## Coordinator umbrellas
 
 | Name | Wraps |
 |------|--------|
-| `coordinator_run` | Delegation to `AdaptiveExperimentationOrchestrator.run` (full five skills) |
-| `coordinator_minimal_demo` | Smoke path only (three skill spans) |
+| `coordinator_run` | Orchestrator canonical v1 (four skill traces + umbrella) |
+| `coordinator_minimal_demo` | Smoke path |
 
 ---
 
-## Canonical five-skill graph (full pipeline)
-
 ```mermaid
-flowchart TD
-    subgraph orch [AdaptiveExperimentationOrchestrator]
-      RS[Retrieval skill]
-      VS[Validation skill]
-      CE[Causal evaluation skill]
-      EG[Experiment generation skill]
-      RR[Recommendation agent v1]
-      RS --> VS --> CE --> EG --> RR
+flowchart LR
+    subgraph orch [Canonical v1 — AdaptiveExperimentationOrchestrator]
+      RS[Retrieval]
+      VS[Validation]
+      CE[Causal evaluation]
+      RR[Recommendation]
+      RS --> VS --> CE --> RR
+    end
+
+    subgraph future [Slice D later]
+      EG[Experiment generation — not wired to canonical yet]
     end
 ```
