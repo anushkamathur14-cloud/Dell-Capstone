@@ -1,4 +1,4 @@
-"""Causal evaluation skill — Slice B.
+"""Causal evaluation skill.
 
 Output schema v1: stable contract for orchestrator and recommendation skill.
 """
