@@ -1,4 +1,4 @@
-"""Causal evaluation skill — Slice B.
+"""Causal evaluation skill
 
 Output schema v1: stable contract for orchestrator and recommendation skill.
 """
@@ -18,6 +18,15 @@ class EvaluationOutput:
     segment_effects: dict[str, Any]      # segment → arm → effect (stub ok for v1)
     ranked_directions: list[str]         # ordered arm_ids, best first
     notes: str                           # human-readable summary of what was found
+
+
+# Weights for composite ranking score across metrics
+_METRIC_WEIGHTS = {
+    "conversion":    0.35,
+    "retention":     0.35,
+    "engagement":    0.15,
+    "revenue_proxy": 0.15,
+}
 
 
 class CausalEvaluationSkill:
@@ -49,9 +58,23 @@ class CausalEvaluationSkill:
                 "revenue_proxy": round((m.revenue_proxy or 0) - (control.revenue_proxy or 0), 4),
             }
 
-            # SE of difference = sqrt(var_treatment + var_control)
             arm_var = m.variance or 0.0
             uncertainty[m.arm_id] = round(sqrt(arm_var + control_var), 4)
+
+        # --- rank arms by weighted composite score ---
+        def composite_score(arm_id: str) -> float:
+            lifts = lift_estimates[arm_id]
+            return sum(lifts[metric] * weight for metric, weight in _METRIC_WEIGHTS.items())
+
+        ranked_directions = sorted(arms_evaluated, key=composite_score, reverse=True)
+
+        # --- build notes ---
+        best = ranked_directions[0] if ranked_directions else "none"
+        notes = (
+            f"Lift computed vs control arm '{control.arm_id}' across {len(arms_evaluated)} treatment arms. "
+            f"Top ranked arm: '{best}' by weighted composite score "
+            f"(conversion 35%, retention 35%, engagement 15%, revenue 15%)."
+        )
 
         return {
             "schema_version": "1.0",
@@ -59,6 +82,7 @@ class CausalEvaluationSkill:
             "lift_estimates": lift_estimates,
             "uncertainty": uncertainty,
             "segment_effects": {},
-            "ranked_directions": [],
-            "notes": f"Lift computed vs control arm '{control.arm_id}' across {len(arms_evaluated)} treatment arms.",
+            "ranked_directions": ranked_directions,
+            "notes": notes,
         }
+
