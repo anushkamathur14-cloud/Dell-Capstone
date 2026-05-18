@@ -17,6 +17,7 @@ class OrchestrationResult:
     experiment: Experiment
     memory: ExperimentMemory
     metrics: list[MetricsSummary]
+    validation_report: dict[str, Any]
     recommendation: dict[str, Any]
 
 
@@ -46,5 +47,6 @@ class AdaptiveExperimentationOrchestrator:
             experiment=context["experiment"],
             memory=context["memory"],
             metrics=context["metrics"],
+            validation_report=validation_report,
             recommendation=recommendation,
         )

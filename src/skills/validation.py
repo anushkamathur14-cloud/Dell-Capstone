@@ -1,18 +1,11 @@
-"""Validation skill stub."""
+"""Validation skill backed by the LangGraph validation agent."""
+
+from src.agent.validation_agent import ValidationAgent
 
 
 class ValidationSkill:
+    def __init__(self, agent: ValidationAgent | None = None) -> None:
+        self._agent = agent or ValidationAgent()
+
     def run(self, context: dict) -> dict:
-        issues = []
-
-        if not context["experiment"].traffic_split:
-            issues.append("Missing traffic split.")
-
-        if not context["metrics"]:
-            issues.append("No metrics summary available.")
-
-        decision = "go" if not issues else "caution"
-        if len(issues) >= 2:
-            decision = "stop"
-
-        return {"decision": decision, "issues": issues}
+        return self._agent.run(context)
