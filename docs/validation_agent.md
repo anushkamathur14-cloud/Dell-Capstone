@@ -3,7 +3,8 @@
 This document explains the **Validation & quality checks** agent: what it does, how it fits the repo, how to run it, and where to read the code.
 
 **Branch:** `experimentation/validation-agent`  
-**Primary code:** `src/agent/validation_agent.py`, `src/validation/`, `src/skills/validation.py`
+**Primary code:** `src/agent/validation_agent.py`, `src/validation/`, `src/skills/validation.py`  
+**Team notes / merge context:** [`EXPERIMENTATION_DEV_PLAN.md`](EXPERIMENTATION_DEV_PLAN.md) §7
 
 ---
 

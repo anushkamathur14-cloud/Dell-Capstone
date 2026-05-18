@@ -2,6 +2,8 @@
 
 A clean starter repository for a recommendation-first agentic system that turns experiment data into validated insights and ranked next-best experiments.
 
+**Active feature branches:** `experimentation/validation-agent` (workstream B) · `experimentation/recommendation-agent` (workstream D) — see [`docs/EXPERIMENTATION_DEV_PLAN.md`](docs/EXPERIMENTATION_DEV_PLAN.md) §7 for branch notes and merge order.
+
 ## Purpose
 
 The MVP focuses on:

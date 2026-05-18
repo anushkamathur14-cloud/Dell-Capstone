@@ -213,10 +213,46 @@ flowchart LR
 
 ---
 
-## 7. Document control
+## 7. Agent implementation branches (team workstreams)
+
+Feature agents are developed on **short-lived branches** off `dev/experimentation-plan`, then merged via PR after review.
+
+| Workstream | Topic | Branch | Primary code | Doc | API (standalone) |
+| ---------- | ----- | ------ | ------------ | --- | ---------------- |
+| **B** | Validation / quality checks | `experimentation/validation-agent` | `src/agent/validation_agent.py`, `src/validation/` | [`validation_agent.md`](validation_agent.md) | `POST /validate/{experiment_id}` |
+| **D** | Recommendation logic | `experimentation/recommendation-agent` | `src/agent/recommendation_agent.py`, `src/recommendation/` | [`recommendation_agent.md`](recommendation_agent.md) | `POST /recommend/{experiment_id}` |
+
+**Shared orchestrator:** `AdaptiveExperimentationOrchestrator` calls `ValidationSkill` then, after evaluation + generation, `RecommendationSkill`. Full run: `POST /orchestrate/{experiment_id}`.
+
+### B — validation notes
+
+- LangGraph nodes: `structural` → `metrics` → `benchmark` → `world_spec` → `decide` → `llm_diagnostics`.
+- Output: `go` / `caution` / `stop`. **`stop`** (2+ errors) halts the pipeline.
+- World-spec and benchmark failures are **warnings** by default (inform, do not auto-halt).
+- Generate benchmark parquets before `benchmark_loaded: true` (see validation doc §9.1).
+
+### D — recommendation notes
+
+- LangGraph nodes: `prepare` → `score` → `rank` → `explain`.
+- Scoring method: **`lift_aware_v1`** (`retention - λ√variance + uncertainty bonus + capped lift`).
+- Does **not** halt the pipeline; returns `top_recommendation`, `ranked_candidates`, `score_components`, `explanation`.
+- Stub generation emits **two candidates** so ranking is observable in local runs.
+- Optional LLM: `ENABLE_RECOMMENDATION_LLM=true` + `pip install -e ".[llm]"`.
+
+### Merge order (suggested)
+
+1. `experimentation/validation-agent` → `dev/experimentation-plan`
+2. `experimentation/recommendation-agent` → `dev/experimentation-plan` (rebase on B if both touch orchestrator/API)
+3. `dev/experimentation-plan` → `main` after stakeholder sign-off
+
+---
+
+## 8. Document control
 
 | Version | Branch | Notes |
 | ------- | ------ | ----- |
 | 1.0 | `dev/experimentation-plan` | Initial mapped plan + flows |
+| 1.1 | `experimentation/validation-agent` | Workstream B — LangGraph validation agent + docs |
+| 1.2 | `experimentation/recommendation-agent` | Workstream D — LangGraph recommendation agent + docs |
 
 Update this file when Dell stack constraints (warehouse, LLM endpoint, experiment platform) are fixed — replace generic labels in diagrams with approved system names.

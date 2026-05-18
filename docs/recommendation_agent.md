@@ -3,7 +3,8 @@
 This document explains the **Recommendation logic** agent: how it ranks next-best experiments, how it mirrors the validation agent pattern, and how to run it.
 
 **Branch:** `experimentation/recommendation-agent`  
-**Primary code:** `src/agent/recommendation_agent.py`, `src/recommendation/`, `src/skills/recommendation.py`
+**Primary code:** `src/agent/recommendation_agent.py`, `src/recommendation/`, `src/skills/recommendation.py`  
+**Team notes / merge context:** [`EXPERIMENTATION_DEV_PLAN.md`](EXPERIMENTATION_DEV_PLAN.md) §7
 
 ---
 
