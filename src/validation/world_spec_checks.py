@@ -1,4 +1,8 @@
-"""World-spec constraint checks (warnings only — do not halt the pipeline)."""
+"""World-spec constraint checks (warnings only — do not halt the pipeline).
+
+Reads configs/world_spec.yaml. Failures are severity=warning by design.
+See docs/validation_agent.md §5 (decision policy).
+"""
 
 from __future__ import annotations
 
