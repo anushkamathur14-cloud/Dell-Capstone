@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     database_url: str = Field(alias="DATABASE_URL")
     enable_pgvector: bool = Field(default=False, alias="ENABLE_PGVECTOR")
+    langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
+    langchain_api_key: str | None = Field(default=None, alias="LANGCHAIN_API_KEY")
+    langchain_project: str = Field(default="dell-capstone-validation", alias="LANGCHAIN_PROJECT")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
