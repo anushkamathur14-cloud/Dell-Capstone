@@ -297,7 +297,7 @@ When adding checks, always set **`severity`** explicitly: `error` only for true 
 |------------|-------------|
 | **A — Retrieval** | Supplies `context`; validation does not load parquets itself unless `benchmark_dir` is set |
 | **C — Causal evaluation** | Runs only if validation is not `stop` |
-| **D — Recommendation** | Downstream of validation + evaluation |
+| **D — Recommendation** | Downstream of validation + evaluation → [`docs/recommendation_agent.md`](recommendation_agent.md) |
 | **E — LangGraph / LangSmith** | Validation agent is the reference LangGraph implementation in this repo |
 
 ---

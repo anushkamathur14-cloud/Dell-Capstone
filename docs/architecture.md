@@ -212,6 +212,10 @@ Rule-based or scoring-based ranking.
 **Future extension**
 Contextual bandits for adaptive experiment allocation.
 
+**Implementation (this repo)**  
+LangGraph agent on branch `experimentation/recommendation-agent`: `src/agent/recommendation_agent.py`, `src/recommendation/`, `RecommendationSkill`, `POST /recommend/{experiment_id}`.  
+→ See **[`docs/recommendation_agent.md`](recommendation_agent.md)** for scoring formula, graph nodes, and examples.
+
 ---
 
 ## 5. Recommended Execution Flow

@@ -78,6 +78,16 @@ class ValidationReport(BaseModel):
     diagnostics_source: Literal["template", "llm"] = "template"
 
 
+class RecommendationReport(BaseModel):
+    schema_version: str = "v1.0"
+    ranking_method: str = "lift_aware_v1"
+    top_recommendation: dict[str, Any] | None = None
+    ranked_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    explanation: str = ""
+    explanation_source: Literal["template", "llm"] = "template"
+    warnings: list[str] = Field(default_factory=list)
+
+
 class RecommendationCandidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

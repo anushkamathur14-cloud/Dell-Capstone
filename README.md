@@ -68,7 +68,8 @@ Quick checks:
 - `GET /health`
 - `GET /`
 - `POST /validate/{experiment_id}?objective=day7_retention` — validation agent only
-- `POST /orchestrate/{experiment_id}?objective=improve_retention` — full pipeline (includes `validation_report`)
+- `POST /recommend/{experiment_id}?objective=day7_retention` — recommendation agent only
+- `POST /orchestrate/{experiment_id}?objective=improve_retention` — full pipeline (includes `validation_report` + `recommendation`)
 
 ## Validation agent (Workstream B)
 
@@ -87,10 +88,17 @@ Generate benchmark parquets before running benchmark validation:
 python -c "from synthetic_env.pipeline import run_generation; run_generation(output_dir='synthetic_env/benchmarks/generated_sanity_calibrated')"
 ```
 
+## Recommendation agent (Workstream D)
+
+The **recommendation agent** ranks generated experiment candidates using a lift-aware score, exposes score breakdowns, and produces a template or optional LLM explanation for the top pick.
+
+**Full documentation:** [`docs/recommendation_agent.md`](docs/recommendation_agent.md).
+
 ## Where Docs Live
 
 - **Experimentation roadmap (this branch):** [`docs/EXPERIMENTATION_DEV_PLAN.md`](docs/EXPERIMENTATION_DEV_PLAN.md) — phased dev plan, data/mechanism flows
 - **Validation agent (Workstream B):** [`docs/validation_agent.md`](docs/validation_agent.md)
+- **Recommendation agent (Workstream D):** [`docs/recommendation_agent.md`](docs/recommendation_agent.md)
 - Architecture (runtime repo): `docs/architecture.md`
 - World spec: `docs/world_spec.md`
 - World config: `configs/world_spec.yaml`

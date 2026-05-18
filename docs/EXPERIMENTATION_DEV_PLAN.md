@@ -40,7 +40,8 @@
    → Implemented as LangGraph agent: [`docs/validation_agent.md`](validation_agent.md) (`experimentation/validation-agent` branch).
 4. **Evaluation** produces uplift-style summaries consumable by generation and ranking (EconML/CausalML/doWhy when ready).
 5. **Generation** proposes **feasible** candidate arms under constraints (JSON schema + checks).
-6. **Recommendation** ranks candidates with explainable outputs for review.
+6. **Recommendation** ranks candidates with explainable outputs for review.  
+   → LangGraph agent: [`docs/recommendation_agent.md`](recommendation_agent.md) (`experimentation/recommendation-agent` branch).
 
 **Exit criteria (suggested):** End-to-end run on real or synthetic Parquet with documented metrics; reproducible notebook or CI smoke on benchmark tables.
 

@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     )
     enable_validation_llm: bool = Field(default=False, alias="ENABLE_VALIDATION_LLM")
     validation_llm_model: str = Field(default="gpt-4o-mini", alias="VALIDATION_LLM_MODEL")
+    enable_recommendation_llm: bool = Field(default=False, alias="ENABLE_RECOMMENDATION_LLM")
+    recommendation_llm_model: str = Field(default="gpt-4o-mini", alias="RECOMMENDATION_LLM_MODEL")
+    recommendation_variance_lambda: float = Field(default=0.2, alias="RECOMMENDATION_VARIANCE_LAMBDA")
+    recommendation_uncertainty_weight: float = Field(default=0.2, alias="RECOMMENDATION_UNCERTAINTY_WEIGHT")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

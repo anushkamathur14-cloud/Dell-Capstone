@@ -40,7 +40,11 @@ class AdaptiveExperimentationOrchestrator:
 
         evaluation = self.evaluator.run(context)
         candidates = self.generator.run(context=context, evaluation=evaluation)
-        recommendation = self.recommender.run(candidates=candidates, evaluation=evaluation)
+        recommendation = self.recommender.run(
+            candidates=candidates,
+            evaluation=evaluation,
+            context=context,
+        )
 
         return OrchestrationResult(
             schema_version="v1.0",

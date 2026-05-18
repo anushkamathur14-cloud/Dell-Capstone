@@ -1,22 +1,23 @@
-"""Recommendation skill stub."""
+"""Recommendation skill backed by the LangGraph recommendation agent.
 
+Used by AdaptiveExperimentationOrchestrator after experiment generation.
+See docs/recommendation_agent.md.
+"""
+
+from typing import Any
+
+from src.agent.recommendation_agent import RecommendationAgent
 from src.data.models import RecommendationCandidate
 
 
 class RecommendationSkill:
-    def run(self, candidates: list[RecommendationCandidate], evaluation: dict) -> dict:
-        ranked = []
-        for candidate in candidates:
-            candidate_data = candidate.model_dump()
-            metric_stub = candidate.metric_stub or {}
-            retention = metric_stub.get("retention") if metric_stub.get("retention") is not None else 0.0
-            variance = metric_stub.get("variance") if metric_stub.get("variance") is not None else 0.0
-            score = retention - (0.2 * variance) + 0.2 * (1 - evaluation["uncertainty"])
-            ranked.append({**candidate_data, "score": round(score, 3)})
+    def __init__(self, agent: RecommendationAgent | None = None) -> None:
+        self._agent = agent or RecommendationAgent()
 
-        ranked.sort(key=lambda c: c["score"], reverse=True)
-
-        return {
-            "top_recommendation": ranked[0] if ranked else None,
-            "ranked_candidates": ranked,
-        }
+    def run(
+        self,
+        candidates: list[RecommendationCandidate],
+        evaluation: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self._agent.run(candidates=candidates, evaluation=evaluation, context=context)

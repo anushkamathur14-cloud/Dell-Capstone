@@ -7,3 +7,5 @@ def test_orchestrator_smoke() -> None:
     assert result.schema_version == "v1.0"
     assert result.validation_report["decision"] in {"go", "caution"}
     assert result.recommendation["top_recommendation"] is not None
+    assert result.recommendation.get("explanation")
+    assert result.recommendation.get("ranking_method") == "lift_aware_v1"
