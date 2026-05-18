@@ -34,11 +34,15 @@ dependencies = [
 
 [project.optional-dependencies]
 vector = ["pgvector"]
+llm = ["langchain-openai"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
 testpaths = ["tests", "synthetic_env/tests"]
 addopts = "-q"
+markers = [
+  "slow: integration tests that generate synthetic benchmark data",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -12,6 +12,10 @@ MIN_RETENTION_SPREAD = 0.01
 TRAFFIC_SUM_TOLERANCE = 0.01
 
 
+def messages_from_checks(checks: list[dict[str, Any]], severity: Severity) -> list[str]:
+    return [check["message"] for check in checks if not check["passed"] and check["severity"] == severity]
+
+
 def _check(
     name: str,
     passed: bool,

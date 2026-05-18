@@ -71,7 +71,11 @@ class ValidationReport(BaseModel):
     schema_version: str = "v1.0"
     decision: ValidationDecision
     issues: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
     checks: list[ValidationCheck] = Field(default_factory=list)
+    benchmark_loaded: bool = False
+    diagnostics_summary: str = ""
+    diagnostics_source: Literal["template", "llm"] = "template"
 
 
 class RecommendationCandidate(BaseModel):

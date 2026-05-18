@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
     langchain_api_key: str | None = Field(default=None, alias="LANGCHAIN_API_KEY")
     langchain_project: str = Field(default="dell-capstone-validation", alias="LANGCHAIN_PROJECT")
+    benchmark_data_dir: str = Field(
+        default="synthetic_env/benchmarks/generated_sanity_calibrated",
+        alias="BENCHMARK_DATA_DIR",
+    )
+    enable_validation_llm: bool = Field(default=False, alias="ENABLE_VALIDATION_LLM")
+    validation_llm_model: str = Field(default="gpt-4o-mini", alias="VALIDATION_LLM_MODEL")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
