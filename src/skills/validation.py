@@ -12,7 +12,7 @@ class ValidationSkill:
             issues.append("No metrics summary available.")
 
         decision = "go" if not issues else "caution"
-        if len(issues) > 2:
+        if len(issues) >= 2:
             decision = "stop"
 
         return {"decision": decision, "issues": issues}

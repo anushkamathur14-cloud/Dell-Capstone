@@ -31,6 +31,7 @@ from src.skills.validation import ValidationSkill
 class OrchestrationResult:
     """Bundle from canonical v1 runs (after validation ``go``/``caution`` — ``stop`` raises)."""
 
+    schema_version: str
     experiment: Experiment
     memory: ExperimentMemory
     metrics: list[MetricsSummary]
@@ -73,6 +74,7 @@ class AdaptiveExperimentationOrchestrator:
         )
 
         return OrchestrationResult(
+            schema_version="v1.0",
             experiment=context["experiment"],
             memory=context["memory"],
             metrics=context["metrics"],
