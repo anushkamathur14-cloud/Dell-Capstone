@@ -215,8 +215,14 @@ uvicorn src.api.main:app --reload
 ### 8.4 Tests
 
 ```bash
-pytest tests/test_recommendation_agent.py tests/test_skill_contracts.py -q
+# Recommendation + shared B/E contract tests
+pytest tests/test_recommendation_agent.py tests/test_workstream_be_contracts.py -q
+
+# Full suite
+pytest tests/ -q
 ```
+
+`tests/test_workstream_be_contracts.py` asserts `RecommendationReport` schema, `score > 0`, distinct candidate scores, and LangGraph edge wiring (workstream E).
 
 ---
 

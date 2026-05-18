@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import operator
 from pathlib import Path
-from typing import Annotated, Any, Literal, TypedDict
+from typing import Annotated, Any, Literal, Optional, TypedDict, Union
 
 from langgraph.graph import END, START, StateGraph
 
@@ -26,7 +26,7 @@ DEFAULT_BENCHMARK_DIR = Path("synthetic_env/benchmarks/generated_sanity_calibrat
 
 class ValidationState(TypedDict):
     context: dict[str, Any]
-    benchmark_dir: str | None
+    benchmark_dir: Optional[str]
     enable_llm: bool
     checks: Annotated[list[dict[str, Any]], operator.add]
     issues: Annotated[list[str], operator.add]
@@ -115,8 +115,8 @@ class ValidationAgent:
 
     def __init__(
         self,
-        benchmark_dir: Path | str | None = None,
-        enable_llm: bool | None = None,
+        benchmark_dir: Optional[Union[Path, str]] = None,
+        enable_llm: Optional[bool] = None,
     ) -> None:
         self._benchmark_dir = Path(benchmark_dir) if benchmark_dir else None
         self._enable_llm = enable_llm

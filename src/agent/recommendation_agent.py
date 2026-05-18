@@ -7,7 +7,7 @@ LLM or template explanation. See docs/recommendation_agent.md.
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, Optional, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -25,14 +25,14 @@ from src.recommendation.scoring import (
 class RecommendationState(TypedDict):
     candidates: list[Any]
     evaluation: dict[str, Any]
-    context: dict[str, Any] | None
+    context: Optional[dict[str, Any]]
     enable_llm: bool
     variance_lambda: float
     uncertainty_weight: float
     warnings: Annotated[list[str], operator.add]
     scored_candidates: list[dict[str, Any]]
     ranked_candidates: list[dict[str, Any]]
-    top_recommendation: dict[str, Any] | None
+    top_recommendation: Optional[dict[str, Any]]
     explanation: str
     explanation_source: str
     ranking_method: str
@@ -92,7 +92,7 @@ class RecommendationAgent:
 
     def __init__(
         self,
-        enable_llm: bool | None = None,
+        enable_llm: Optional[bool] = None,
         variance_lambda: float = DEFAULT_VARIANCE_LAMBDA,
         uncertainty_weight: float = DEFAULT_UNCERTAINTY_WEIGHT,
     ) -> None:
@@ -105,7 +105,7 @@ class RecommendationAgent:
         self,
         candidates: list[RecommendationCandidate] | list[dict[str, Any]],
         evaluation: dict[str, Any],
-        context: dict[str, Any] | None = None,
+        context: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         enable_llm = evaluation.get("enable_llm", self._enable_llm)
         if enable_llm is None:

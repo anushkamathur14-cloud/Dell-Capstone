@@ -1,7 +1,9 @@
 """Pydantic data contracts for experimentation objects."""
 
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -11,12 +13,12 @@ ValidationDecision = Literal["go", "caution", "stop"]
 class Experiment(BaseModel):
     experiment_id: str
     objective: str
-    start_date: datetime | None = None
-    end_date: datetime | None = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     status: str
     traffic_split: dict[str, float] = Field(default_factory=dict)
-    owner: str | None = None
-    notes: str | None = None
+    owner: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class ArmVariant(BaseModel):
@@ -25,7 +27,7 @@ class ArmVariant(BaseModel):
     treatment_description: str
     structured_parameters_json: dict[str, Any] = Field(default_factory=dict)
     treatment_type: str
-    constraints_tag: str | None = None
+    constraints_tag: Optional[str] = None
 
 
 class Observation(BaseModel):
@@ -42,11 +44,11 @@ class MetricsSummary(BaseModel):
     experiment_id: str
     arm_id: str
     sample_size: int
-    conversion: float | None = None
-    retention: float | None = None
-    engagement: float | None = None
-    revenue_proxy: float | None = None
-    variance: float | None = None
+    conversion: Optional[float] = None
+    retention: Optional[float] = None
+    engagement: Optional[float] = None
+    revenue_proxy: Optional[float] = None
+    variance: Optional[float] = None
     confidence_interval: list[float] = Field(default_factory=list)
 
 
@@ -56,7 +58,7 @@ class ExperimentMemory(BaseModel):
     lessons_learned: list[str] = Field(default_factory=list)
     winning_patterns: list[str] = Field(default_factory=list)
     failed_patterns: list[str] = Field(default_factory=list)
-    analyst_notes: str | None = None
+    analyst_notes: Optional[str] = None
 
 
 class ValidationCheck(BaseModel):
@@ -81,7 +83,7 @@ class ValidationReport(BaseModel):
 class RecommendationReport(BaseModel):
     schema_version: str = "v1.0"
     ranking_method: str = "lift_aware_v1"
-    top_recommendation: dict[str, Any] | None = None
+    top_recommendation: Optional[dict[str, Any]] = None
     ranked_candidates: list[dict[str, Any]] = Field(default_factory=list)
     explanation: str = ""
     explanation_source: Literal["template", "llm"] = "template"
@@ -98,4 +100,4 @@ class RecommendationCandidate(BaseModel):
     target_segment: str
     implementation_notes: str
     signal_from_eval: str
-    metric_stub: dict[str, float | None] = Field(default_factory=dict)
+    metric_stub: dict[str, Optional[float]] = Field(default_factory=dict)

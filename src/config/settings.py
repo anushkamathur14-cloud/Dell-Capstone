@@ -1,5 +1,9 @@
 """Environment-aware settings loader."""
 
+from __future__ import annotations
+
+from typing import Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -12,7 +16,7 @@ class Settings(BaseSettings):
     database_url: str = Field(alias="DATABASE_URL")
     enable_pgvector: bool = Field(default=False, alias="ENABLE_PGVECTOR")
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
-    langchain_api_key: str | None = Field(default=None, alias="LANGCHAIN_API_KEY")
+    langchain_api_key: Optional[str] = Field(default=None, alias="LANGCHAIN_API_KEY")
     langchain_project: str = Field(default="dell-capstone-validation", alias="LANGCHAIN_PROJECT")
     benchmark_data_dir: str = Field(
         default="synthetic_env/benchmarks/generated_sanity_calibrated",

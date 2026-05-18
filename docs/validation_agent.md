@@ -257,12 +257,17 @@ uvicorn src.api.main:app --reload
 ### 9.5 Tests
 
 ```bash
-# Unit tests (Python >= 3.10)
-pytest tests/test_validation_agent.py tests/test_skill_contracts.py -q
+# Workstream B + E contract tests (schema, non-zero outputs, LangGraph wiring)
+pytest tests/test_validation_agent.py tests/test_workstream_be_contracts.py -q
+
+# All unit tests
+pytest tests/ -q
 
 # Slow integration: generates synthetic benchmark in tmp dir
 pytest tests/test_validation_agent.py -m slow -q
 ```
+
+`tests/test_workstream_be_contracts.py` validates `ValidationReport` schema round-trips, non-empty checks/diagnostics, `go`/`stop` policy, and orchestrator integration (workstream E).
 
 ---
 
