@@ -1,4 +1,8 @@
-"""Benchmark parquet validation using synthetic_env check primitives."""
+"""Benchmark parquet validation using synthetic_env check primitives.
+
+Loads tables via benchmark_loader and maps synthetic_env report sections to
+ValidationCheck records (severity=warning). See docs/validation_agent.md.
+"""
 
 from __future__ import annotations
 

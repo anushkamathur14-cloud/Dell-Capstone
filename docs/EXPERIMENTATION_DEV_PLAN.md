@@ -36,7 +36,8 @@
 
 1. **Contracts** stay stable (`Experiment`, `ArmVariant`, `Observation`, `MetricsSummary`, `ExperimentMemory`) so every skill agrees on shapes.
 2. **Retrieval** loads experiment context by `experiment_id` + objective (today stubbed; target SQL/warehouse + optional embedding search per [`DATA_SOURCES_AND_TOOLS.md`](../DATA_SOURCES_AND_TOOLS.md)).
-3. **Validation** blocks bad runs (schema, sample size, variance floors).
+3. **Validation** blocks bad runs (schema, sample size, variance floors).  
+   → Implemented as LangGraph agent: [`docs/validation_agent.md`](validation_agent.md) (`experimentation/validation-agent` branch).
 4. **Evaluation** produces uplift-style summaries consumable by generation and ranking (EconML/CausalML/doWhy when ready).
 5. **Generation** proposes **feasible** candidate arms under constraints (JSON schema + checks).
 6. **Recommendation** ranks candidates with explainable outputs for review.

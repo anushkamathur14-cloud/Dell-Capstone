@@ -1,4 +1,7 @@
-"""Rule-based validation checks aligned with synthetic_env/validation/checks.py."""
+"""Rule-based validation checks on retrieval context (experiment, arms, metrics).
+
+Used by the structural and metrics LangGraph nodes. See docs/validation_agent.md.
+"""
 
 from __future__ import annotations
 

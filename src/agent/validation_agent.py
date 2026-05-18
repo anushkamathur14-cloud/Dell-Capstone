@@ -1,4 +1,10 @@
-"""LangGraph validation agent for experiment context quality gating."""
+"""LangGraph validation agent for experiment context quality gating.
+
+Orchestrates structural, metrics, benchmark-parquet, and world-spec checks, then
+emits a ValidationReport (go/caution/stop) plus optional LLM diagnostics.
+
+See docs/validation_agent.md for architecture, decision policy, and usage.
+"""
 
 from __future__ import annotations
 

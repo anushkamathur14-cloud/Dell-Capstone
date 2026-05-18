@@ -42,10 +42,11 @@ pip install --upgrade pip
 pip install -e .
 ```
 
-Optional pgvector support:
+Optional extras:
 
 ```bash
-pip install -e ".[vector]"
+pip install -e ".[vector]"   # pgvector
+pip install -e ".[llm]"      # LLM validation summaries (langchain-openai)
 ```
 
 ### 3) Configure environment variables
@@ -66,10 +67,30 @@ Quick checks:
 
 - `GET /health`
 - `GET /`
+- `POST /validate/{experiment_id}?objective=day7_retention` — validation agent only
+- `POST /orchestrate/{experiment_id}?objective=improve_retention` — full pipeline (includes `validation_report`)
+
+## Validation agent (Workstream B)
+
+The **validation agent** gates experiment data before evaluation and recommendation. It runs:
+
+1. Context checks (traffic split, arms, metrics),
+2. Optional benchmark parquet checks (`synthetic_env` quality gates),
+3. World-spec constraint warnings,
+4. A template or optional LLM diagnostics summary.
+
+**Full documentation:** [`docs/validation_agent.md`](docs/validation_agent.md) (architecture, decision policy, env vars, examples).
+
+Generate benchmark parquets before running benchmark validation:
+
+```bash
+python -c "from synthetic_env.pipeline import run_generation; run_generation(output_dir='synthetic_env/benchmarks/generated_sanity_calibrated')"
+```
 
 ## Where Docs Live
 
 - **Experimentation roadmap (this branch):** [`docs/EXPERIMENTATION_DEV_PLAN.md`](docs/EXPERIMENTATION_DEV_PLAN.md) — phased dev plan, data/mechanism flows
+- **Validation agent (Workstream B):** [`docs/validation_agent.md`](docs/validation_agent.md)
 - Architecture (runtime repo): `docs/architecture.md`
 - World spec: `docs/world_spec.md`
 - World config: `configs/world_spec.yaml`

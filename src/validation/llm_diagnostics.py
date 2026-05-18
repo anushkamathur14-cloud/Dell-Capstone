@@ -1,4 +1,8 @@
-"""Optional LLM diagnostics for validation reports."""
+"""Optional LLM diagnostics for validation reports.
+
+Produces diagnostics_summary after the decide node. Falls back to a deterministic
+template when ENABLE_VALIDATION_LLM is false or langchain-openai is unavailable.
+"""
 
 from __future__ import annotations
 
