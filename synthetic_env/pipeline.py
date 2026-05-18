@@ -26,7 +26,22 @@ def run_generation(
     spec = load_world_spec("configs/world_spec.yaml")
     population = generate_population(spec, n_users=n_users, seed=seed)
     experiments, arms = generate_experiment_tables(spec, experiment_id=experiment_id)
-    observations = simulate_observations(population, experiment_id=experiment_id, arm_ids=arms["arm_id"].tolist(), seed=seed)
+    arm_effect = {
+        arm_id: {
+            "difficulty_shift": arm.difficulty_shift,
+            "reward_rate": arm.reward_rate,
+            "ui_friction": arm.ui_friction,
+            "progression_speed": arm.progression_speed,
+        }
+        for arm_id, arm in spec.example_arms.items()
+    }
+    observations = simulate_observations(
+        population,
+        experiment_id=experiment_id,
+        arm_ids=arms["arm_id"].tolist(),
+        arm_effect=arm_effect,
+        seed=seed,
+    )
     metrics_summary = summarize_metrics(observations, experiment_id=experiment_id)
     experiment_memory = create_experiment_memory(metrics_summary, experiment_id=experiment_id)
 

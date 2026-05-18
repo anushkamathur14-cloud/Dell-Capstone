@@ -14,19 +14,15 @@ def _assign_arms(users: pd.DataFrame, arm_ids: list[str], seed: int) -> np.ndarr
     return rng.choice(arm_ids, size=len(users), p=np.repeat(1 / len(arm_ids), len(arm_ids)))
 
 
-def _score_outcomes(df: pd.DataFrame, seed: int) -> pd.DataFrame:
+def _score_outcomes(df: pd.DataFrame, seed: int, arm_effect: dict[str, dict[str, float]]) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     is_new = (df["lifecycle_stage"] == "new").astype(float)
     is_core = (df["segment_id"] == "core").astype(float)
 
-    arm_effect = {
-        "control": {"difficulty_shift": 0.0, "reward_rate": 1.0, "ui_friction": 0.35, "progression_speed": 1.0},
-        "fast_progression": {"difficulty_shift": -0.05, "reward_rate": 1.4, "ui_friction": 0.4, "progression_speed": 1.4},
-        "high_challenge": {"difficulty_shift": 0.2, "reward_rate": 0.9, "ui_friction": 0.25, "progression_speed": 0.9},
-        "guided_onboarding": {"difficulty_shift": -0.15, "reward_rate": 1.1, "ui_friction": 0.2, "progression_speed": 0.9},
-    }
-
     params = df["arm_id"].map(arm_effect)
+    if params.isna().any():
+        unknown = sorted(set(df.loc[params.isna(), "arm_id"].tolist()))
+        raise ValueError(f"Missing arm effects for arm IDs: {unknown}")
     difficulty_shift = params.map(lambda p: p["difficulty_shift"])
     reward_rate = params.map(lambda p: p["reward_rate"])
     ui_friction = params.map(lambda p: p["ui_friction"])
@@ -94,10 +90,16 @@ def _score_outcomes(df: pd.DataFrame, seed: int) -> pd.DataFrame:
     return df
 
 
-def simulate_observations(users: pd.DataFrame, experiment_id: str, arm_ids: list[str], seed: int = 42) -> pd.DataFrame:
+def simulate_observations(
+    users: pd.DataFrame,
+    experiment_id: str,
+    arm_ids: list[str],
+    arm_effect: dict[str, dict[str, float]],
+    seed: int = 42,
+) -> pd.DataFrame:
     assigned = users.copy()
     assigned["arm_id"] = _assign_arms(assigned, arm_ids=arm_ids, seed=seed)
-    scored = _score_outcomes(assigned, seed=seed)
+    scored = _score_outcomes(assigned, seed=seed, arm_effect=arm_effect)
 
     now = datetime.utcnow().isoformat()
     obs_rows = []

@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Experiment(BaseModel):
@@ -55,3 +55,16 @@ class ExperimentMemory(BaseModel):
     winning_patterns: list[str] = Field(default_factory=list)
     failed_patterns: list[str] = Field(default_factory=list)
     analyst_notes: str | None = None
+
+
+class RecommendationCandidate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_name: str
+    parameter_changes: dict[str, Any] = Field(default_factory=dict)
+    rationale: str
+    expected_tradeoff: str
+    target_segment: str
+    implementation_notes: str
+    signal_from_eval: str
+    metric_stub: dict[str, float | None] = Field(default_factory=dict)

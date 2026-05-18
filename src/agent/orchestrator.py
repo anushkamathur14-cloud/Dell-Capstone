@@ -13,6 +13,7 @@ from src.skills.validation import ValidationSkill
 
 @dataclass
 class OrchestrationResult:
+    schema_version: str
     experiment: Experiment
     memory: ExperimentMemory
     metrics: list[MetricsSummary]
@@ -41,6 +42,7 @@ class AdaptiveExperimentationOrchestrator:
         recommendation = self.recommender.run(candidates=candidates, evaluation=evaluation)
 
         return OrchestrationResult(
+            schema_version="v1.0",
             experiment=context["experiment"],
             memory=context["memory"],
             metrics=context["metrics"],
