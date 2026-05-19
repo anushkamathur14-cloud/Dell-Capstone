@@ -39,7 +39,7 @@ The orchestrator owns **canonical v1**. The coordinator adds umbrella spans (`co
 | **LangSmith** | `validation_skill` |
 | **Canonical v1** | Yes |
 | **Smoke** | Yes |
-| **Status** | Minimal rules stub; Slice E hardens |
+| **Status** | LangGraph validation agent (benchmark + world_spec checks); see [`docs/validation_agent.md`](validation_agent.md) |
 
 ---
 

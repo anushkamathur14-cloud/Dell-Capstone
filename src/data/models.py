@@ -1,9 +1,11 @@
 """Pydantic data contracts for experimentation objects."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+ValidationDecision = Literal["go", "caution", "stop"]
 
 
 class Experiment(BaseModel):
@@ -55,3 +57,35 @@ class ExperimentMemory(BaseModel):
     winning_patterns: list[str] = Field(default_factory=list)
     failed_patterns: list[str] = Field(default_factory=list)
     analyst_notes: str | None = None
+
+
+class ValidationCheck(BaseModel):
+    name: str
+    passed: bool
+    message: str
+    severity: Literal["error", "warning", "info"] = "error"
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class ValidationReport(BaseModel):
+    schema_version: str = "v1.0"
+    decision: ValidationDecision
+    issues: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    checks: list[ValidationCheck] = Field(default_factory=list)
+    benchmark_loaded: bool = False
+    diagnostics_summary: str = ""
+    diagnostics_source: Literal["template", "llm"] = "template"
+
+
+class RecommendationCandidate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_name: str
+    parameter_changes: dict[str, Any] = Field(default_factory=dict)
+    rationale: str
+    expected_tradeoff: str
+    target_segment: str
+    implementation_notes: str
+    signal_from_eval: str
+    metric_stub: dict[str, float | None] = Field(default_factory=dict)

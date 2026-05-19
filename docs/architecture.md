@@ -143,6 +143,10 @@ Check whether experiment data are usable and trustworthy.
 - quality flags,
 - go / caution / stop recommendation.
 
+**Implementation (this repo)**  
+LangGraph agent on branch `experimentation/validation-agent`: `src/agent/validation_agent.py`, `src/validation/`, exposed via `ValidationSkill` and `POST /validate/{experiment_id}`.  
+→ See **[`docs/validation_agent.md`](validation_agent.md)** for flows, decision policy, configuration, and examples.
+
 ---
 
 ### Skill 3 — Causal Evaluation
