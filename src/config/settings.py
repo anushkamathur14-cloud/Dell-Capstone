@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     api_host: str = Field(default="127.0.0.1", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    database_url: str = Field(alias="DATABASE_URL")
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/adaptive_experiments",
+        alias="DATABASE_URL",
+    )
     enable_pgvector: bool = Field(default=False, alias="ENABLE_PGVECTOR")
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
     langchain_api_key: Optional[str] = Field(default=None, alias="LANGCHAIN_API_KEY")

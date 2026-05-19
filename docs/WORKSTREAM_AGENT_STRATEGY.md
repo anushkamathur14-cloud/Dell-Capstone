@@ -14,11 +14,11 @@
 
 | WS | Skill / agent | Runtime style | LLM today |
 |----|---------------|---------------|-----------|
-| **A** | `RetrievalSkill` | Single class (stub → Parquet/SQL target) | None |
+| **A** | `RetrievalSkill` | Parquet via `src/retrieval/`; stub fallback | None |
 | **B** | `ValidationAgent` | LangGraph (6 nodes) | Optional `llm_diagnostics` only |
-| **C** | `CausalEvaluationSkill` | Single class (stub → estimators) | None (by design) |
-| **D** | `ExperimentGenerationSkill` + `RecommendationAgent` | Gen stub; rec LangGraph (4 nodes) | Optional `explain` only |
-| **E** | `AdaptiveExperimentationOrchestrator` + FastAPI | Linear skill chain | Env flags on `/validate`, `/recommend` |
+| **C** | `CausalEvaluationSkill` | `difference_in_means_v1` in `src/evaluation/` | None (by design) |
+| **D** | `ExperimentGenerationSkill` + `RecommendationAgent` | Schema-validated generation; rec LangGraph | Optional `explain` only |
+| **E** | `AdaptiveExperimentationOrchestrator` + FastAPI | Linear skill chain; shared `runtime_options` | Env on all routes via orchestrator |
 
 **E** composes A→B→C→generation→D. It does not use LangGraph at the top level (intentional: explicit, debuggable flow).
 
@@ -125,9 +125,9 @@ From [`architecture.md`](architecture.md) §8:
 | **D rec** | Keep `explain` optional | `lift_aware_v1` always drives rank |
 | **E** | Pass `BENCHMARK_DATA_DIR` + LLM flags through orchestrator (parity with `/validate`) | Single config surface |
 
-### 4.4 Known integration gap (E)
+### 4.4 Deployment (external)
 
-`POST /orchestrate` does not yet inject `_validation_runtime_options()` (benchmark dir, validation LLM) into the orchestrator path, while `POST /validate` does. Fix in E when hardening integration.
+API deploy is documented in [`DEPLOYMENT.md`](DEPLOYMENT.md) (Railway / Colab + Lovable frontend). CORS via `CORS_ALLOW_ORIGINS`.
 
 ---
 

@@ -1,48 +1,57 @@
-"""FastAPI app stub."""
+"""FastAPI service for the adaptive experimentation agent."""
 
 import os
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.agent.orchestrator import AdaptiveExperimentationOrchestrator
 from src.agent.recommendation_agent import RecommendationAgent
-from src.agent.validation_agent import DEFAULT_BENCHMARK_DIR, ValidationAgent
+from src.agent.runtime_options import recommendation_runtime_options, validation_runtime_options
+from src.agent.validation_agent import ValidationAgent
 from src.skills.causal_evaluation import CausalEvaluationSkill
 from src.skills.experiment_generation import ExperimentGenerationSkill
 from src.skills.retrieval import RetrievalSkill
+from src.retrieval.benchmark_context import resolve_benchmark_dir
 
-app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0")
+app = FastAPI(title="Adaptive Experimentation Agent", version="0.2.0")
+
+_cors_origins = os.getenv("CORS_ALLOW_ORIGINS", "*")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in _cors_origins.split(",") if origin.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
 def root() -> dict:
-    return {"service": "adaptive-experimentation-agent", "mode": "mvp-starter"}
+    return {"service": "adaptive-experimentation-agent", "mode": "mvp"}
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
-
-
-def _recommendation_runtime_options() -> dict:
-    enable_llm = os.getenv("ENABLE_RECOMMENDATION_LLM", "false").lower() in {"1", "true", "yes"}
+    benchmark_dir = resolve_benchmark_dir()
+    parquets_ready = all((benchmark_dir / f"{name}.parquet").exists() for name in (
+        "population",
+        "experiments",
+        "arms",
+        "observations",
+        "metrics_summary",
+    ))
     return {
-        "enable_llm": enable_llm,
-        "variance_lambda": float(os.getenv("RECOMMENDATION_VARIANCE_LAMBDA", "0.2")),
-        "uncertainty_weight": float(os.getenv("RECOMMENDATION_UNCERTAINTY_WEIGHT", "0.2")),
+        "status": "ok",
+        "benchmark_data_dir": str(benchmark_dir),
+        "benchmark_parquets_ready": parquets_ready,
     }
-
-
-def _validation_runtime_options() -> dict:
-    benchmark_dir = os.getenv("BENCHMARK_DATA_DIR", str(DEFAULT_BENCHMARK_DIR))
-    enable_llm = os.getenv("ENABLE_VALIDATION_LLM", "false").lower() in {"1", "true", "yes"}
-    return {"benchmark_dir": benchmark_dir, "enable_llm": enable_llm}
 
 
 @app.post("/validate/{experiment_id}")
 def validate(experiment_id: str, objective: str = "day7_retention") -> dict:
     context = RetrievalSkill().run(objective=objective, experiment_id=experiment_id)
-    context.update(_validation_runtime_options())
+    context.update(validation_runtime_options())
     return ValidationAgent(
         benchmark_dir=context["benchmark_dir"],
         enable_llm=context["enable_llm"],
@@ -53,7 +62,7 @@ def validate(experiment_id: str, objective: str = "day7_retention") -> dict:
 def recommend(experiment_id: str, objective: str = "day7_retention") -> dict:
     context = RetrievalSkill().run(objective=objective, experiment_id=experiment_id)
     evaluation = CausalEvaluationSkill().run(context)
-    evaluation.update(_recommendation_runtime_options())
+    evaluation.update(recommendation_runtime_options())
     candidates = ExperimentGenerationSkill().run(context=context, evaluation=evaluation)
     return RecommendationAgent(
         enable_llm=evaluation.get("enable_llm"),
@@ -63,13 +72,18 @@ def recommend(experiment_id: str, objective: str = "day7_retention") -> dict:
 
 
 @app.post("/orchestrate/{experiment_id}")
-def orchestrate(experiment_id: str, objective: str) -> dict:
-    orchestrator = AdaptiveExperimentationOrchestrator()
-    result = orchestrator.run(objective=objective, experiment_id=experiment_id)
+def orchestrate(experiment_id: str, objective: str = "improve_retention") -> dict:
+    result = AdaptiveExperimentationOrchestrator().run(
+        objective=objective,
+        experiment_id=experiment_id,
+    )
     return {
+        "schema_version": result.schema_version,
+        "data_source": result.data_source,
         "experiment": result.experiment.model_dump(),
         "memory": result.memory.model_dump(),
         "metrics": [metric.model_dump() for metric in result.metrics],
         "validation_report": result.validation_report,
+        "evaluation": result.evaluation,
         "recommendation": result.recommendation,
     }

@@ -163,10 +163,13 @@ def test_orchestrator_recommendation_scores_are_distinct_when_candidates_differ(
 def test_end_to_end_skill_chain_produces_evaluation_non_zero_lift() -> None:
     context = RetrievalSkill().run(objective="day7_retention", experiment_id="exp_001")
     evaluation = CausalEvaluationSkill().run(context)
+    assert evaluation.get("_stub") is False
+    assert evaluation.get("estimator") == "difference_in_means_v1"
     assert "uncertainty" in evaluation
     assert evaluation["uncertainty"] > 0
     lift = evaluation.get("estimated_lift") or evaluation.get("placeholder_lift")
     assert lift is not None
+    assert lift > 0
 
     candidates = ExperimentGenerationSkill().run(context=context, evaluation=evaluation)
     assert len(candidates) >= 2
