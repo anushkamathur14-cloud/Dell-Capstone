@@ -219,8 +219,13 @@ Feature agents are developed on **short-lived branches** off `dev/experimentatio
 
 | Workstream | Topic | Branch | Primary code | Doc | API (standalone) |
 | ---------- | ----- | ------ | ------------ | --- | ---------------- |
+| **A** | Data / retrieval (stub → warehouse) | TBD | `src/skills/retrieval.py`, `synthetic_env/` | [`WORKSTREAM_AGENT_STRATEGY.md`](WORKSTREAM_AGENT_STRATEGY.md) §1 | (via orchestrator) |
 | **B** | Validation / quality checks | `experimentation/validation-agent` | `src/agent/validation_agent.py`, `src/validation/` | [`validation_agent.md`](validation_agent.md) | `POST /validate/{experiment_id}` |
-| **D** | Recommendation logic | `experimentation/recommendation-agent` | `src/agent/recommendation_agent.py`, `src/recommendation/` | [`recommendation_agent.md`](recommendation_agent.md) | `POST /recommend/{experiment_id}` |
+| **C** | Causal evaluation (stub) | TBD | `src/skills/causal_evaluation.py`, `src/evaluation/` | [`WORKSTREAM_AGENT_STRATEGY.md`](WORKSTREAM_AGENT_STRATEGY.md) §1 | (via orchestrator) |
+| **D** | Generation + recommendation | `experimentation/recommendation-agent` | `src/agent/recommendation_agent.py`, `src/recommendation/`, `src/skills/experiment_generation.py` | [`recommendation_agent.md`](recommendation_agent.md) | `POST /recommend/{experiment_id}` |
+| **E** | Integration (orchestrator, API, contracts) | `experimentation/recommendation-agent` | `src/agent/orchestrator.py`, `src/api/main.py`, `tests/test_workstream_be_contracts.py` | [`WORKSTREAM_AGENT_STRATEGY.md`](WORKSTREAM_AGENT_STRATEGY.md) | `POST /orchestrate/{experiment_id}` |
+
+**Strategy (subagents vs deep agents vs LLM):** [`WORKSTREAM_AGENT_STRATEGY.md`](WORKSTREAM_AGENT_STRATEGY.md)
 
 **Shared orchestrator:** `AdaptiveExperimentationOrchestrator` calls `ValidationSkill` then, after evaluation + generation, `RecommendationSkill`. Full run: `POST /orchestrate/{experiment_id}`.
 
@@ -254,5 +259,6 @@ Feature agents are developed on **short-lived branches** off `dev/experimentatio
 | 1.0 | `dev/experimentation-plan` | Initial mapped plan + flows |
 | 1.1 | `experimentation/validation-agent` | Workstream B — LangGraph validation agent + docs |
 | 1.2 | `experimentation/recommendation-agent` | Workstream D — LangGraph recommendation agent + docs |
+| 1.3 | `experimentation/recommendation-agent` | Workstreams A–E agent strategy (subagents, deep agents, LLM) |
 
 Update this file when Dell stack constraints (warehouse, LLM endpoint, experiment platform) are fixed — replace generic labels in diagrams with approved system names.
