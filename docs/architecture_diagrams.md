@@ -1,10 +1,14 @@
 # Architecture Diagrams — Adaptive Experimentation Agent
 
-Visual reference for the system architecture (**Workstream E**). These diagrams
-use [Mermaid](https://mermaid.js.org/) and render automatically on GitHub.
+Visual reference for the system architecture (**Workstream E — documentation / diagrams**).
+These diagrams use [Mermaid](https://mermaid.js.org/) and render automatically on GitHub.
 
-**Sources:** `docs/architecture.md`, `docs/skills_catalog.md`,
-`docs/validation_agent.md`.
+> **Naming:** **Workstream E** = this diagram deliverable. **Slice E** in
+> [`implementation_plan_v1.md`](implementation_plan_v1.md) = Quality Gate (validation implementation).
+
+**Sources:** [`docs/architecture.md`](architecture.md), [`docs/agent_architecture.md`](agent_architecture.md),
+[`docs/skills_catalog.md`](skills_catalog.md), [`docs/implementation_plan_v1.md`](implementation_plan_v1.md).
+Validation deep-dive (when merged): `docs/validation_agent.md` (see PR #6).
 
 ---
 
@@ -26,7 +30,7 @@ flowchart BT
     end
 
     subgraph L2["Layer 2 — Skill-Based Agent Layer"]
-        SK["Orchestrator + five skills<br/>Retrieval<br/>Validation<br/>Causal Evaluation<br/>Recommendation<br/>Generation (deferred)"]
+        SK["Orchestrator + four active skills<br/>Retrieval · Validation · Causal Evaluation · Recommendation<br/>Generation deferred (Slice D)"]
     end
 
     subgraph L3["Layer 3 — Decision &amp; Governance"]
@@ -52,8 +56,8 @@ flowchart BT
 
 **Question answered:** *How does a single run execute?*
 
-The orchestrator runs four skills in sequence. **Experiment Generation** exists
-in the code but is **deferred** — it is not wired into the v1 path yet.
+The orchestrator runs **four skills** in sequence on `main`. **Experiment Generation**
+exists in the codebase but is **not wired** into the canonical v1 path (Slice D / Phase 2).
 
 ```mermaid
 flowchart LR
@@ -61,11 +65,11 @@ flowchart LR
 
     subgraph V1["Canonical v1 — AdaptiveExperimentationOrchestrator"]
         direction LR
-        R["Retrieval<br/>parquet adapter"]
-        V["Validation<br/>LangGraph — done"]
+        R["Retrieval<br/>stub → parquet adapter"]
+        V["Validation<br/>stub on main; LangGraph target PR #6"]
         C["Causal Evaluation<br/>deterministic stub"]
         RC["Recommendation<br/>heuristic ranking"]
-        STOP["Halt run<br/>return rationale"]
+        STOP["Halt run<br/>raises error"]
         EG["Experiment Generation<br/>Phase 2 — Slice D"]
 
         R --> V
@@ -92,15 +96,13 @@ flowchart LR
     class STOP stop
 ```
 
-> **Note on validation:** if the Validation step returns `stop`, the
-> orchestrator halts before Causal Evaluation and Recommendation run, and
-> emits a rationale instead of a recommendation.
+> **Note on validation:** if Validation returns `stop`, the orchestrator **raises**
+> (`ValueError` on `main`) before Causal Evaluation and Recommendation run — no
+> partial `OrchestrationResult` in v1.
 >
-> **Slice labels** mirror `docs/skills_catalog.md`:
-> Retrieval (Slice A — parquet adapter), Validation (Slice E hardens — already
-> done in v1), Causal Evaluation (Slice B deepens — currently a deterministic
-> stub), Recommendation (Slice C replaces — currently heuristic), and
-> Experiment Generation (Slice D — Phase 2, not wired in).
+> **Slice labels** (see `docs/implementation_plan_v1.md`):
+> Retrieval (Slice A), Validation (Slice E — hardens), Causal Evaluation (Slice B),
+> Recommendation (Slice C), Experiment Generation (Slice D — deferred).
 
 ---
 
@@ -108,13 +110,12 @@ flowchart LR
 
 **Question answered:** *How do we see what the agent is doing?*
 
-Every step emits a named trace span. The whole run is wrapped in a
-`coordinator_run` umbrella span so the team can debug any single execution end
-to end.
+Each canonical step emits a named trace span. Use **`CoordinatorAgent.run_full_pipeline`**
+for a **`coordinator_run`** umbrella span (optional; direct orchestrator calls omit it).
 
 ```mermaid
 flowchart TB
-    subgraph CR["coordinator_run — umbrella span"]
+    subgraph CR["coordinator_run — umbrella span (optional)"]
         direction TB
         subgraph ORCH["AdaptiveExperimentationOrchestrator"]
             direction LR
@@ -137,10 +138,8 @@ flowchart TB
     class LS tool
 ```
 
-> **Why this matters:** because each span captures inputs, outputs, latency and
-> errors, any failed run can be replayed and inspected without re-running the
-> pipeline. This is what makes the agent trustworthy to Nicholas and the rest
-> of the team.
+> **`experiment_generation_skill`** does not appear on canonical v1 runs until Slice D
+> is wired into orchestration.
 
 ---
 
