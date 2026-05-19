@@ -36,7 +36,7 @@ def _sample_candidates() -> list[RecommendationCandidate]:
 def test_recommendation_graph_has_expected_nodes() -> None:
     graph = build_recommendation_graph()
     node_names = set(graph.get_graph().nodes)
-    assert {"prepare", "score", "rank", "explain"}.issubset(node_names)
+    assert {"prepare", "score", "rank", "llm_tool_loop", "explain"}.issubset(node_names)
 
 
 def test_score_candidate_uses_retention_and_variance() -> None:

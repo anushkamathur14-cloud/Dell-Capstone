@@ -42,6 +42,10 @@ Commit the parquets or run generation in a Railway **release command** / one-off
 | `CORS_ALLOW_ORIGINS` | For Lovable | Comma-separated frontend URLs, e.g. `https://your-app.lovable.app` |
 | `ENABLE_VALIDATION_LLM` | No | `true` + API key for validation narratives |
 | `ENABLE_RECOMMENDATION_LLM` | No | `true` + API key for recommendation explanations |
+| `ENABLE_RECOMMENDATION_LLM_LOOP` | No | Hybrid tool loop (max 3 iterations); revisions need approval |
+| `ENABLE_CAUSAL_SANDBOX` | No | `true` (default) for extended causal sandbox analysis |
+| `DAYTONA_API_KEY` | No | Daytona sandbox; falls back to local subprocess |
+| `SANDBOX_PROVIDER` | No | `daytona` (default) |
 | `LANGCHAIN_API_KEY` / `OPENAI_API_KEY` | If LLM on | |
 | `DATABASE_URL` | Future | Not required for current MVP (retrieval uses parquets) |
 
@@ -66,7 +70,8 @@ Response includes `benchmark_parquets_ready` so you can alert if data was not ba
 | `GET` | `/health` | Liveness + data readiness |
 | `POST` | `/validate/{experiment_id}?objective=day7_retention` | Validation only |
 | `POST` | `/recommend/{experiment_id}?objective=day7_retention` | Eval + generation + rank |
-| `POST` | `/orchestrate/{experiment_id}?objective=improve_retention` | Full pipeline |
+| `POST` | `/orchestrate/{experiment_id}?objective=improve_retention` | Full pipeline + post-hoc statistical analysis |
+| `POST` | `/analyze/{experiment_id}?objective=day7_retention` | Statistical analysis only (after experiment) |
 
 Example (replace host):
 

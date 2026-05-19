@@ -5,16 +5,21 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.agent.causal_evaluation_agent import CausalEvaluationAgent
 from src.agent.orchestrator import AdaptiveExperimentationOrchestrator
 from src.agent.recommendation_agent import RecommendationAgent
-from src.agent.runtime_options import recommendation_runtime_options, validation_runtime_options
+from src.agent.runtime_options import (
+    causal_runtime_options,
+    recommendation_runtime_options,
+    validation_runtime_options,
+)
+from src.agent.statistical_analysis_agent import StatisticalAnalysisAgent
 from src.agent.validation_agent import ValidationAgent
-from src.skills.causal_evaluation import CausalEvaluationSkill
 from src.skills.experiment_generation import ExperimentGenerationSkill
 from src.skills.retrieval import RetrievalSkill
 from src.retrieval.benchmark_context import resolve_benchmark_dir
 
-app = FastAPI(title="Adaptive Experimentation Agent", version="0.2.0")
+app = FastAPI(title="Adaptive Experimentation Agent", version="0.3.0")
 
 _cors_origins = os.getenv("CORS_ALLOW_ORIGINS", "*")
 app.add_middleware(
@@ -34,17 +39,15 @@ def root() -> dict:
 @app.get("/health")
 def health() -> dict:
     benchmark_dir = resolve_benchmark_dir()
-    parquets_ready = all((benchmark_dir / f"{name}.parquet").exists() for name in (
-        "population",
-        "experiments",
-        "arms",
-        "observations",
-        "metrics_summary",
-    ))
+    parquets_ready = all(
+        (benchmark_dir / f"{name}.parquet").exists()
+        for name in ("population", "experiments", "arms", "observations", "metrics_summary")
+    )
     return {
         "status": "ok",
         "benchmark_data_dir": str(benchmark_dir),
         "benchmark_parquets_ready": parquets_ready,
+        "sandbox_provider": os.getenv("SANDBOX_PROVIDER", "daytona"),
     }
 
 
@@ -61,14 +64,26 @@ def validate(experiment_id: str, objective: str = "day7_retention") -> dict:
 @app.post("/recommend/{experiment_id}")
 def recommend(experiment_id: str, objective: str = "day7_retention") -> dict:
     context = RetrievalSkill().run(objective=objective, experiment_id=experiment_id)
-    evaluation = CausalEvaluationSkill().run(context)
+    evaluation = CausalEvaluationAgent().run(context)
+    evaluation.update(causal_runtime_options())
     evaluation.update(recommendation_runtime_options())
     candidates = ExperimentGenerationSkill().run(context=context, evaluation=evaluation)
-    return RecommendationAgent(
-        enable_llm=evaluation.get("enable_llm"),
-        variance_lambda=evaluation.get("variance_lambda", 0.2),
-        uncertainty_weight=evaluation.get("uncertainty_weight", 0.2),
-    ).run(candidates=candidates, evaluation=evaluation, context=context)
+    return RecommendationAgent().run(candidates=candidates, evaluation=evaluation, context=context)
+
+
+@app.post("/analyze/{experiment_id}")
+def analyze(experiment_id: str, objective: str = "day7_retention") -> dict:
+    """Post-experiment statistical analysis (programmatic + sandbox)."""
+    context = RetrievalSkill().run(objective=objective, experiment_id=experiment_id)
+    evaluation = CausalEvaluationAgent().run(context)
+    validation_report = ValidationAgent(
+        benchmark_dir=validation_runtime_options()["benchmark_dir"],
+    ).run({**context, **validation_runtime_options()})
+    return StatisticalAnalysisAgent().run(
+        context=context,
+        evaluation=evaluation,
+        validation_report=validation_report,
+    )
 
 
 @app.post("/orchestrate/{experiment_id}")
@@ -86,4 +101,5 @@ def orchestrate(experiment_id: str, objective: str = "improve_retention") -> dic
         "validation_report": result.validation_report,
         "evaluation": result.evaluation,
         "recommendation": result.recommendation,
+        "statistical_analysis": result.statistical_analysis,
     }

@@ -16,9 +16,10 @@
 |----|---------------|---------------|-----------|
 | **A** | `RetrievalSkill` | Parquet via `src/retrieval/`; stub fallback | None |
 | **B** | `ValidationAgent` | LangGraph (6 nodes) | Optional `llm_diagnostics` only |
-| **C** | `CausalEvaluationSkill` | `difference_in_means_v1` in `src/evaluation/` | None (by design) |
-| **D** | `ExperimentGenerationSkill` + `RecommendationAgent` | Schema-validated generation; rec LangGraph | Optional `explain` only |
-| **E** | `AdaptiveExperimentationOrchestrator` + FastAPI | Linear skill chain; shared `runtime_options` | Env on all routes via orchestrator |
+| **C** | `CausalEvaluationAgent` → `CausalEvaluationSkill` | Programmatic lift + experiment design + Daytona/local sandbox | None in estimator |
+| **D** | `ExperimentGenerationSkill` + `RecommendationAgent` | Canonical rank + **LLM tool loop (max 3)** + `pending_revisions` | Optional `explain` + loop |
+| **E** | Orchestrator + FastAPI | Full pipeline + **`StatisticalAnalysisAgent`** post-run | Env on all routes |
+| **F** | `StatisticalAnalysisAgent` → skill | Post-experiment programmatic + sandbox (`POST /analyze`) | None |
 
 **E** composes A→B→C→generation→D. It does not use LangGraph at the top level (intentional: explicit, debuggable flow).
 

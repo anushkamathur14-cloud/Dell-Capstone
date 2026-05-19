@@ -80,14 +80,39 @@ class ValidationReport(BaseModel):
     diagnostics_source: Literal["template", "llm"] = "template"
 
 
+class RecommendationRevision(BaseModel):
+    """LLM-proposed change to ranking; requires human approval before apply."""
+
+    revision_id: str
+    tool_name: str
+    rationale: str
+    proposed_ranked_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    status: Literal["pending_approval", "approved", "rejected"] = "pending_approval"
+
+
 class RecommendationReport(BaseModel):
     schema_version: str = "v1.0"
     ranking_method: str = "lift_aware_v1"
     top_recommendation: Optional[dict[str, Any]] = None
     ranked_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    canonical_ranked_candidates: list[dict[str, Any]] = Field(default_factory=list)
     explanation: str = ""
     explanation_source: Literal["template", "llm"] = "template"
     warnings: list[str] = Field(default_factory=list)
+    pending_revisions: list[RecommendationRevision] = Field(default_factory=list)
+    llm_loop_iterations: int = 0
+
+
+class StatisticalAnalysisReport(BaseModel):
+    schema_version: str = "v1.0"
+    experiment_id: str
+    experiment_status: str
+    programmatic_summary: str = ""
+    programmatic_results: dict[str, Any] = Field(default_factory=dict)
+    arm_level_table: list[dict[str, Any]] = Field(default_factory=list)
+    sandbox_analysis: dict[str, Any] = Field(default_factory=dict)
+    analysis_source: str = "programmatic"
+    evaluation_snapshot: dict[str, Any] = Field(default_factory=dict)
 
 
 class RecommendationCandidate(BaseModel):

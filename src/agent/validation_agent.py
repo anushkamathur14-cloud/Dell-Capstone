@@ -1,10 +1,4 @@
-"""LangGraph validation agent for experiment context quality gating.
-
-Orchestrates structural, metrics, benchmark-parquet, and world-spec checks, then
-emits a ValidationReport (go/caution/stop) plus optional LLM diagnostics.
-
-See docs/validation_agent.md for architecture, decision policy, and usage.
-"""
+"""LangGraph validation agent — nodes invoke ValidationSkill steps only (4A)."""
 
 from __future__ import annotations
 
@@ -14,14 +8,11 @@ from typing import Annotated, Any, Literal, Optional, TypedDict, Union
 
 from langgraph.graph import END, START, StateGraph
 
+from src.agent.tools.registry import get_skill_registry
 from src.data.models import ValidationReport
-from src.validation.benchmark_checks import run_benchmark_parquet_checks
-from src.validation.checks import messages_from_checks, run_metrics_checks, run_structural_checks
-from src.validation.llm_diagnostics import generate_diagnostics_summary
-from src.validation.world_spec_checks import run_world_spec_checks
+from src.skills.validation import DEFAULT_BENCHMARK_DIR
 
 Decision = Literal["go", "caution", "stop"]
-DEFAULT_BENCHMARK_DIR = Path("synthetic_env/benchmarks/generated_sanity_calibrated")
 
 
 class ValidationState(TypedDict):
@@ -37,59 +28,40 @@ class ValidationState(TypedDict):
     diagnostics_source: str
 
 
-def _partition_checks(checks: list[dict[str, Any]]) -> dict[str, Any]:
-    return {
-        "checks": checks,
-        "issues": messages_from_checks(checks, "error"),
-        "warnings": messages_from_checks(checks, "warning"),
-    }
-
-
 def structural_node(state: ValidationState) -> dict[str, Any]:
-    return _partition_checks(run_structural_checks(state["context"]))
+    return get_skill_registry().validation.run_structural(state["context"])
 
 
 def metrics_node(state: ValidationState) -> dict[str, Any]:
-    return _partition_checks(run_metrics_checks(state["context"]))
+    return get_skill_registry().validation.run_metrics(state["context"])
 
 
 def benchmark_node(state: ValidationState) -> dict[str, Any]:
-    experiment_id = state["context"]["experiment"].experiment_id
-    benchmark_dir = Path(state["benchmark_dir"] or DEFAULT_BENCHMARK_DIR)
-    checks, loaded = run_benchmark_parquet_checks(benchmark_dir, experiment_id)
-    result = _partition_checks(checks)
-    result["benchmark_loaded"] = loaded
-    return result
+    return get_skill_registry().validation.run_benchmark(
+        state["context"],
+        benchmark_dir=state.get("benchmark_dir"),
+    )
 
 
 def world_spec_node(state: ValidationState) -> dict[str, Any]:
-    experiment_id = state["context"]["experiment"].experiment_id
-    benchmark_dir = Path(state["benchmark_dir"] or DEFAULT_BENCHMARK_DIR)
-    checks = run_world_spec_checks(state["context"], benchmark_dir=benchmark_dir)
-    return _partition_checks(checks)
+    return get_skill_registry().validation.run_world_spec(
+        state["context"],
+        benchmark_dir=state.get("benchmark_dir"),
+    )
 
 
 def decision_node(state: ValidationState) -> dict[str, Any]:
-    errors = state["issues"]
-    warnings = state["warnings"]
-    if len(errors) >= 2:
-        decision: Decision = "stop"
-    elif errors or warnings:
-        decision = "caution"
-    else:
-        decision = "go"
-    return {"decision": decision}
+    return get_skill_registry().validation.run_decide(state["issues"], state["warnings"])
 
 
 def llm_diagnostics_node(state: ValidationState) -> dict[str, Any]:
-    summary, source = generate_diagnostics_summary(
-        decision=state["decision"],
-        issues=state["issues"],
-        warnings=state["warnings"],
-        checks=state["checks"],
-        use_llm=state["enable_llm"],
+    return get_skill_registry().validation.run_diagnostics(
+        state["decision"],
+        state["issues"],
+        state["warnings"],
+        state["checks"],
+        enable_llm=state["enable_llm"],
     )
-    return {"diagnostics_summary": summary, "diagnostics_source": source}
 
 
 def build_validation_graph():
@@ -111,7 +83,7 @@ def build_validation_graph():
 
 
 class ValidationAgent:
-    """Skill 2 agent: context checks, benchmark parquets, world-spec warnings, optional LLM summary."""
+    """Deep agent: each node delegates to ValidationSkill."""
 
     def __init__(
         self,
@@ -131,7 +103,7 @@ class ValidationAgent:
         final_state = self._graph.invoke(
             {
                 "context": context,
-                "benchmark_dir": str(benchmark_dir) if benchmark_dir else None,
+                "benchmark_dir": str(benchmark_dir) if benchmark_dir else str(DEFAULT_BENCHMARK_DIR),
                 "enable_llm": bool(enable_llm),
                 "checks": [],
                 "issues": [],

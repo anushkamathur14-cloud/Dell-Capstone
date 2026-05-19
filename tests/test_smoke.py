@@ -9,3 +9,4 @@ def test_orchestrator_smoke() -> None:
     assert result.recommendation["top_recommendation"] is not None
     assert result.recommendation.get("explanation")
     assert result.recommendation.get("ranking_method") == "lift_aware_v1"
+    assert result.statistical_analysis.get("experiment_id") == result.experiment.experiment_id
