@@ -18,6 +18,7 @@ Treat as source of truth (do not “casually” refactor away):
 | `src/observability/langsmith_trace.py` (`TraceNames`) | Stable LangSmith span names |
 | Coordinator vs orchestrator split (`docs/agent_architecture.md`) | Who owns umbrellas vs canonical wiring |
 | **Smoke vs canonical** semantics (`docs/langsmith_trace_plan.md`) | Onboarding tracer vs benchmarked execution path |
+| [`docs/validation_agent.md`](validation_agent.md) | LangGraph validation agent, rule catalog, benchmark/world checks, `/validate` API (Slice E) |
 
 ## 3. Canonical workflow
 
@@ -92,6 +93,8 @@ Experiment proposal is **future extension** (Slice D). Canonical `OrchestrationR
 
 - `validation_report` schema fixed; rule catalog documented (`go`/`caution`/`stop`).
 - **One acceptance pytest** for representative pass/fail cases.
+
+**Reference:** [`docs/validation_agent.md`](validation_agent.md) — implementation notes, env flags, and how checks map to `ValidationReport`.
 
 ---
 
