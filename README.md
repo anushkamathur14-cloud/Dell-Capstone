@@ -48,7 +48,7 @@ Optional extras:
 
 ```bash
 pip install -e ".[vector]"   # pgvector
-pip install -e ".[llm]"      # LLM validation summaries (langchain-openai)
+pip install -e ".[llm]"      # Azure Foundry / OpenAI via langchain-openai (see docs/AZURE_FOUNDRY.md)
 ```
 
 ### 3) Configure environment variables

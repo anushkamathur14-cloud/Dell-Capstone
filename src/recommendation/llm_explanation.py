@@ -39,20 +39,21 @@ def generate_recommendation_explanation(
 ) -> tuple[str, str]:
     """Return (explanation, source) where source is 'llm' or 'template'."""
     if use_llm is None:
-        use_llm = bool(os.getenv("LANGCHAIN_API_KEY") or os.getenv("OPENAI_API_KEY"))
+        from src.llm.client import is_llm_configured
+
+        use_llm = is_llm_configured()
 
     if not use_llm or not top_recommendation:
         return _template_explanation(top_recommendation, ranked_candidates, warnings), "template"
 
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
-        from langchain_openai import ChatOpenAI
-    except ImportError:
-        return _template_explanation(top_recommendation, ranked_candidates, warnings), "template"
 
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
-    model_name = os.getenv("RECOMMENDATION_LLM_MODEL", "gpt-4o-mini")
-    llm = ChatOpenAI(model=model_name, temperature=0, api_key=api_key)
+        from src.llm.client import get_chat_llm
+
+        llm = get_chat_llm(model_env="RECOMMENDATION_LLM_MODEL", default_model="gpt-4o-mini")
+    except (ImportError, RuntimeError):
+        return _template_explanation(top_recommendation, ranked_candidates, warnings), "template"
 
     payload = {
         "top_recommendation": top_recommendation,

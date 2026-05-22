@@ -34,17 +34,16 @@ def _llm_next_tool_call(
     state_snapshot: dict[str, Any],
     iteration: int,
 ) -> Optional[dict[str, Any]]:
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
-    if not api_key:
+    from src.llm.client import get_chat_llm, is_llm_configured
+
+    if not is_llm_configured():
         return None
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
-        from langchain_openai import ChatOpenAI
-    except ImportError:
-        return None
 
-    model_name = os.getenv("RECOMMENDATION_LLM_MODEL", "gpt-4o-mini")
-    llm = ChatOpenAI(model=model_name, temperature=0, api_key=api_key)
+        llm = get_chat_llm(model_env="RECOMMENDATION_LLM_MODEL", default_model="gpt-4o-mini")
+    except (ImportError, RuntimeError):
+        return None
     system = (
         "You assist with experiment recommendation review. "
         f"Respond with ONE JSON object only, max {MAX_LLM_ITERATIONS} steps total.\n"

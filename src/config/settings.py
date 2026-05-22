@@ -25,10 +25,20 @@ class Settings(BaseSettings):
         default="synthetic_env/benchmarks/generated_sanity_calibrated",
         alias="BENCHMARK_DATA_DIR",
     )
+    llm_provider: str = Field(default="auto", alias="LLM_PROVIDER")
+    azure_openai_endpoint: Optional[str] = Field(default=None, alias="AZURE_OPENAI_ENDPOINT")
+    azure_openai_api_key: Optional[str] = Field(default=None, alias="AZURE_OPENAI_API_KEY")
+    azure_openai_api_version: str = Field(
+        default="2024-08-01-preview", alias="AZURE_OPENAI_API_VERSION"
+    )
     enable_validation_llm: bool = Field(default=False, alias="ENABLE_VALIDATION_LLM")
     validation_llm_model: str = Field(default="gpt-4o-mini", alias="VALIDATION_LLM_MODEL")
     enable_recommendation_llm: bool = Field(default=False, alias="ENABLE_RECOMMENDATION_LLM")
     recommendation_llm_model: str = Field(default="gpt-4o-mini", alias="RECOMMENDATION_LLM_MODEL")
+    generation_llm_model: str = Field(default="gpt-4o", alias="GENERATION_LLM_MODEL")
+    stat_causal_llm_model: str = Field(default="gpt-4.1", alias="STAT_CAUSAL_LLM_MODEL")
+    orchestration_llm_model: str = Field(default="gpt-4o", alias="ORCHESTRATION_LLM_MODEL")
+    embedding_model: str = Field(default="text-embedding-3-small", alias="EMBEDDING_MODEL")
     recommendation_variance_lambda: float = Field(default=0.2, alias="RECOMMENDATION_VARIANCE_LAMBDA")
     recommendation_uncertainty_weight: float = Field(default=0.2, alias="RECOMMENDATION_UNCERTAINTY_WEIGHT")
 

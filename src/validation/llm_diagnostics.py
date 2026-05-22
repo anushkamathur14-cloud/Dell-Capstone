@@ -39,21 +39,20 @@ def generate_diagnostics_summary(
     use_llm: bool | None = None,
 ) -> tuple[str, str]:
     """Return (summary, source) where source is 'llm' or 'template'."""
+    from src.llm.client import get_chat_llm, is_llm_configured
+
     if use_llm is None:
-        use_llm = bool(os.getenv("LANGCHAIN_API_KEY") or os.getenv("OPENAI_API_KEY"))
+        use_llm = is_llm_configured()
 
     if not use_llm:
         return _template_summary(decision, issues, warnings, checks), "template"
 
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
-        from langchain_openai import ChatOpenAI
-    except ImportError:
-        return _template_summary(decision, issues, warnings, checks), "template"
 
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
-    model_name = os.getenv("VALIDATION_LLM_MODEL", "gpt-4o-mini")
-    llm = ChatOpenAI(model=model_name, temperature=0, api_key=api_key)
+        llm = get_chat_llm(model_env="VALIDATION_LLM_MODEL", default_model="gpt-4o-mini")
+    except (ImportError, RuntimeError):
+        return _template_summary(decision, issues, warnings, checks), "template"
 
     payload = {
         "decision": decision,

@@ -46,13 +46,19 @@ Commit the parquets or run generation in a Railway **release command** / one-off
 | `PORT` | Railway | Set by platform |
 | `BENCHMARK_DATA_DIR` | Recommended | Path to parquets (default: `synthetic_env/benchmarks/generated_sanity_calibrated`) |
 | `CORS_ALLOW_ORIGINS` | For Lovable | Comma-separated frontend URLs, e.g. `https://your-app.lovable.app` |
-| `ENABLE_VALIDATION_LLM` | No | `true` + API key for validation narratives |
-| `ENABLE_RECOMMENDATION_LLM` | No | `true` + API key for recommendation explanations |
+| `ENABLE_VALIDATION_LLM` | No | `true` + Azure/OpenAI credentials for validation narratives |
+| `ENABLE_RECOMMENDATION_LLM` | No | `true` + credentials for recommendation explanations |
 | `ENABLE_RECOMMENDATION_LLM_LOOP` | No | Hybrid tool loop (max 3 iterations); revisions need approval |
+| `AZURE_OPENAI_ENDPOINT` | If using Foundry | Azure AI Foundry resource endpoint |
+| `AZURE_OPENAI_API_KEY` | If using Foundry | Key from Foundry project |
+| `AZURE_OPENAI_API_VERSION` | No | e.g. `2024-08-01-preview` |
+| `LLM_PROVIDER` | No | `auto` (default), `azure`, or `openai` |
+| `VALIDATION_LLM_MODEL` / `RECOMMENDATION_LLM_MODEL` | If LLM on | **Deployment names** in Foundry — see [`AZURE_FOUNDRY.md`](AZURE_FOUNDRY.md) |
 | `ENABLE_CAUSAL_SANDBOX` | No | `true` (default) for extended causal sandbox analysis |
 | `DAYTONA_API_KEY` | No | Daytona sandbox; falls back to local subprocess |
 | `SANDBOX_PROVIDER` | No | `daytona` (default) |
-| `LANGCHAIN_API_KEY` / `OPENAI_API_KEY` | If LLM on | |
+| `LANGCHAIN_API_KEY` | If LangSmith on | Tracing only (not the Azure chat key) |
+| `OPENAI_API_KEY` | If direct OpenAI | Skip when using Azure Foundry |
 | `DATABASE_URL` | Future | Not required for current MVP (retrieval uses parquets) |
 
 See `.env.example` for the full list.
@@ -108,7 +114,7 @@ Response includes `data_source` (`benchmark` or `stub`), `validation_report`, `e
 | D | Generation + LangGraph recommendation |
 | E | Orchestrator + FastAPI |
 
-LLM nodes remain **optional**; deterministic paths work without OpenAI.
+LLM nodes remain **optional**; deterministic paths work without Azure or OpenAI. For Foundry setup and model roles, see [`AZURE_FOUNDRY.md`](AZURE_FOUNDRY.md).
 
 ---
 
