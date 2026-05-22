@@ -22,17 +22,15 @@ dependencies = [
   "psycopg2-binary",
   "numpy",
   "pandas",
-  "polars",
+  "pyarrow",
   "scipy",
   "statsmodels",
   "scikit-learn",
   "pyyaml",
-  "matplotlib",
-  "jupyter",
-  "pytest",
 ]
 
 [project.optional-dependencies]
+dev = ["jupyter", "matplotlib", "polars", "pytest"]
 vector = ["pgvector"]
 llm = ["langchain-openai"]
 sandbox = ["daytona"]
