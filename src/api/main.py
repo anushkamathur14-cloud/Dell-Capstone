@@ -22,9 +22,13 @@ def health() -> dict:
 
 
 def _validation_runtime_options() -> dict:
-    benchmark_dir = os.getenv("BENCHMARK_DATA_DIR", str(DEFAULT_BENCHMARK_DIR))
-    enable_llm = os.getenv("ENABLE_VALIDATION_LLM", "false").lower() in {"1", "true", "yes"}
-    return {"benchmark_dir": benchmark_dir, "enable_llm": enable_llm}
+    from src.config.settings import get_settings
+
+    settings = get_settings()
+    return {
+        "benchmark_dir": settings.benchmark_data_dir,
+        "enable_llm": settings.enable_validation_llm,
+    }
 
 
 @app.post("/validate/{experiment_id}")

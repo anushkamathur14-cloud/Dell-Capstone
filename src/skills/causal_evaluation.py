@@ -12,4 +12,9 @@ class CausalEvaluationSkill:
         self._agent = agent or CausalEvaluationAgent()
 
     def run(self, context: dict[str, Any]) -> dict[str, Any]:
-        return self._agent.run(context)
+        from src.config.settings import get_settings
+
+        use_loop = context.get("use_causal_agent_loop")
+        if use_loop is None:
+            use_loop = get_settings().enable_causal_agent_loop
+        return self._agent.run(context, use_agent_loop=use_loop)

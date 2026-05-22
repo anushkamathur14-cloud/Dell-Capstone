@@ -25,7 +25,9 @@ def main() -> int:
     from src.agent.orchestrator import AdaptiveExperimentationOrchestrator
 
     orchestrator = AdaptiveExperimentationOrchestrator()
-    result = orchestrator.run(objective="improve_retention", experiment_id="exp_001")
+    experiment_id = os.getenv("E2E_EXPERIMENT_ID", "exp_sanity_001_calibrated")
+    objective = os.getenv("E2E_OBJECTIVE", "day7_retention")
+    result = orchestrator.run(objective=objective, experiment_id=experiment_id)
     print(
         json.dumps(
             {

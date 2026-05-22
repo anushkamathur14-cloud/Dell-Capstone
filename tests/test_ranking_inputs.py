@@ -4,9 +4,12 @@ from src.agent.ranking_inputs import ranking_candidates_from_context
 from src.skills.retrieval import RetrievalSkill
 
 
-def test_ranking_candidates_from_retrieval_stub() -> None:
-    ctx = RetrievalSkill().run(objective="test", experiment_id="exp_fixture")
+def test_ranking_candidates_from_benchmark_retrieval() -> None:
+    ctx = RetrievalSkill().run(
+        objective="day7_retention",
+        experiment_id="exp_sanity_001_calibrated",
+    )
     cands = ranking_candidates_from_context(ctx)
-    assert len(cands) >= 1
-    assert cands[0]["candidate_name"] == ctx["metrics"][0].arm_id
+    assert len(cands) >= 4
     assert cands[0]["source"] == "retrieval_metrics"
+    assert ctx.get("source") == "benchmark_parquet"

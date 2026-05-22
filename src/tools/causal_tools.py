@@ -87,10 +87,22 @@ def build_causal_tools(context: dict[str, Any]) -> tuple[list[StructuredTool], C
 
 
 def resolve_evaluation(state: CausalToolState) -> EvaluationArtifact:
+    if state.baseline is None:
+        raw = run_programmatic_causal(state.context)
+        raw["source"] = "programmatic"
+        state.baseline = validate_evaluation_payload(raw)
+
     if state.submitted is not None:
-        return state.submitted
-    if state.baseline is not None:
-        return state.baseline
-    baseline = run_programmatic_causal(state.context)
-    baseline["source"] = "stub"
-    return validate_evaluation_payload(baseline)
+        sub = state.submitted
+        base = state.baseline
+        return validate_evaluation_payload(
+            {
+                **base.model_dump(),
+                **{k: v for k, v in sub.model_dump().items() if v not in (None, "", [], {})},
+                "ranked_directions": sub.ranked_directions or base.ranked_directions,
+                "segment_effects": sub.segment_effects or base.segment_effects,
+                "source": sub.source,
+            }
+        )
+
+    return state.baseline

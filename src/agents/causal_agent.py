@@ -60,14 +60,19 @@ class CausalEvaluationAgent:
             f"Evaluate experiment {experiment_id}. "
             "Call run_programmatic_baseline first, then submit_evaluation with final JSON."
         )
+        if os.getenv("CAUSAL_REQUIRE_SANDBOX", "false").lower() in {"1", "true", "yes"}:
+            user_msg += (
+                " You MUST call execute_analysis_code with pandas code comparing all arms "
+                "before submit_evaluation."
+            )
         graph.invoke(
             {"messages": [{"role": "user", "content": user_msg}]},
             config={"recursion_limit": self._max_iterations},
         )
 
         artifact = resolve_evaluation(state)
-        if state.submitted is None and state.baseline is not None:
-            artifact = state.baseline.model_copy(update={"source": "programmatic"})
+        if state.submitted is None:
+            artifact = artifact.model_copy(update={"source": "agent_loop_merged_baseline"})
         return artifact.to_skill_dict()
 
     @staticmethod

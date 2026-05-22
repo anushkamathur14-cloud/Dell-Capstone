@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 
 class EvaluationArtifact(BaseModel):
+    schema_version: str = "v1.0"
     estimated_lift: float = 0.0
     placeholder_lift: float = 0.0
     uncertainty: float = Field(default=0.2, ge=0.0, le=1.0)
@@ -29,6 +30,7 @@ def validate_evaluation_payload(payload: dict[str, Any]) -> EvaluationArtifact:
     if isinstance(ranked, str):
         ranked = [ranked]
     cleaned = {
+        "schema_version": str(payload.get("schema_version") or "v1.0"),
         "estimated_lift": float(payload.get("estimated_lift") or payload.get("placeholder_lift") or 0.0),
         "placeholder_lift": float(payload.get("placeholder_lift") or payload.get("estimated_lift") or 0.0),
         "uncertainty": float(payload.get("uncertainty", 0.2)),

@@ -13,9 +13,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.agent.ranking_inputs import ranking_candidates_from_context
+from src.config.settings import get_settings
 from src.data.models import Experiment, ExperimentMemory, MetricsSummary
 from src.agent.traced_steps import (
     run_causal_evaluation_skill,
+    run_experiment_generation_skill,
     run_recommendation_skill,
     run_retrieval_skill,
     run_validation_skill,
@@ -58,6 +60,11 @@ class AdaptiveExperimentationOrchestrator:
 
     def run(self, objective: str, experiment_id: str) -> OrchestrationResult:
         context = run_retrieval_skill(self.retrieval, objective=objective, experiment_id=experiment_id)
+        settings = get_settings()
+        context["benchmark_dir"] = context.get("benchmark_dir") or settings.benchmark_data_dir
+        context["enable_llm"] = settings.enable_validation_llm
+        context["use_causal_agent_loop"] = settings.enable_causal_agent_loop
+
         validation_report = run_validation_skill(self.validation, context)
 
         if validation_report["decision"] == "stop":
@@ -69,8 +76,19 @@ class AdaptiveExperimentationOrchestrator:
         for item in ranking_inputs:
             item["signal_from_eval"] = signal
 
+        candidates: list[dict[str, Any]] = list(ranking_inputs)
+        if settings.enable_generation_agent:
+            proposals = run_experiment_generation_skill(
+                self.generator, context=context, evaluation=evaluation
+            )
+            seen = {c["candidate_name"] for c in candidates}
+            for proposal in proposals:
+                if proposal["candidate_name"] not in seen:
+                    candidates.append(proposal)
+                    seen.add(proposal["candidate_name"])
+
         recommendation = run_recommendation_skill(
-            self.recommender, candidates=ranking_inputs, evaluation=evaluation
+            self.recommender, candidates=candidates, evaluation=evaluation
         )
 
         return OrchestrationResult(
@@ -80,6 +98,6 @@ class AdaptiveExperimentationOrchestrator:
             metrics=context["metrics"],
             validation_report=validation_report,
             evaluation=evaluation,
-            candidates=ranking_inputs,
+            candidates=candidates,
             recommendation=recommendation,
         )
