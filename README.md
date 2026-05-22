@@ -55,7 +55,15 @@ pip install -e ".[llm]"      # Azure OpenAI via langchain-openai
 cp .env.example .env
 ```
 
-Update values in `.env` for your local environment. Azure OpenAI setup: [`docs/azure_openai.md`](docs/azure_openai.md).
+Update values in `.env` for your local environment. Azure OpenAI setup: [`docs/azure_openai.md`](docs/azure_openai.md). Deep agents / prompts / tools: [`docs/deep_agents.md`](docs/deep_agents.md). LangSmith CLI: [`docs/langsmith_cli.md`](docs/langsmith_cli.md).
+
+End-to-end (stub path, no LLM):
+
+```bash
+python scripts/run_e2e_canonical.py
+```
+
+Enable causal ReAct loop locally: `ENABLE_CAUSAL_AGENT_LOOP=true` (requires Azure + `pip install -e ".[llm]"`).
 
 Opt-in deployment smoke (not CI):
 

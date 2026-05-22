@@ -62,14 +62,10 @@ def generate_diagnostics_summary(
         "warnings": warnings,
         "failed_checks": [check for check in checks if not check["passed"]],
     }
+    from src.prompts.loader import load_prompt
+
     messages = [
-        SystemMessage(
-            content=(
-                "You are a data-quality analyst for adaptive experimentation. "
-                "Summarize validation results in 3-5 concise sentences for a growth owner. "
-                "Distinguish blocking issues from warnings. Do not invent data."
-            )
-        ),
+        SystemMessage(content=load_prompt("validation/validator_system.md")),
         HumanMessage(content=f"Validation payload:\n{json.dumps(payload, default=str)}"),
     ]
     response = llm.invoke(messages)

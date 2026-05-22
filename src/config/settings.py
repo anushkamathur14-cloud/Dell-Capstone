@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     validation_llm_model: str = Field(default="capstone-mini", alias="VALIDATION_LLM_MODEL")
     generation_llm_model: str = Field(default="capstone-standard", alias="GENERATION_LLM_MODEL")
     stat_llm_model: str = Field(default="capstone-code", alias="STAT_LLM_MODEL")
+    enable_causal_agent_loop: bool = Field(default=False, alias="ENABLE_CAUSAL_AGENT_LOOP")
+    prompt_disclosure_level: str = Field(default="standard", alias="PROMPT_DISCLOSURE_LEVEL")
+    causal_agent_max_iterations: int = Field(default=6, alias="CAUSAL_AGENT_MAX_ITERATIONS")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
