@@ -16,6 +16,8 @@ uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
 
 Railway sets `PORT` automatically; bind to `0.0.0.0`.
 
+This repo includes `railway.toml` and `railpack.json` so Railpack does not require a manual start command (the app is not at `main.py` in the repo root). If deploy still fails, use **Set start command** in the Railway UI with the command above.
+
 ### Install
 
 ```bash
