@@ -43,6 +43,7 @@ testpaths = ["tests", "synthetic_env/tests"]
 addopts = "-q"
 markers = [
   "slow: integration tests that generate synthetic benchmark data",
+  "azure_live: live Azure OpenAI calls; never run in CI",
 ]
 
 [tool.setuptools]

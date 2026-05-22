@@ -9,7 +9,10 @@ class Settings(BaseSettings):
     api_host: str = Field(default="127.0.0.1", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    database_url: str = Field(alias="DATABASE_URL")
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/adaptive_experiments",
+        alias="DATABASE_URL",
+    )
     enable_pgvector: bool = Field(default=False, alias="ENABLE_PGVECTOR")
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")
     langchain_api_key: str | None = Field(default=None, alias="LANGCHAIN_API_KEY")
@@ -18,8 +21,17 @@ class Settings(BaseSettings):
         default="synthetic_env/benchmarks/generated_sanity_calibrated",
         alias="BENCHMARK_DATA_DIR",
     )
+    # Azure OpenAI (Microsoft Foundry) — deployment names, not model marketing names
+    azure_openai_endpoint: str | None = Field(default=None, alias="AZURE_OPENAI_ENDPOINT")
+    azure_openai_api_version: str = Field(
+        default="2024-12-01-preview",
+        alias="AZURE_OPENAI_API_VERSION",
+    )
+    azure_openai_api_key: str | None = Field(default=None, alias="AZURE_OPENAI_API_KEY")
     enable_validation_llm: bool = Field(default=False, alias="ENABLE_VALIDATION_LLM")
-    validation_llm_model: str = Field(default="gpt-4o-mini", alias="VALIDATION_LLM_MODEL")
+    validation_llm_model: str = Field(default="capstone-mini", alias="VALIDATION_LLM_MODEL")
+    generation_llm_model: str = Field(default="capstone-standard", alias="GENERATION_LLM_MODEL")
+    stat_llm_model: str = Field(default="capstone-code", alias="STAT_LLM_MODEL")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

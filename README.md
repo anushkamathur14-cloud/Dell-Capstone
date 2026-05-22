@@ -46,7 +46,7 @@ Optional extras:
 
 ```bash
 pip install -e ".[vector]"   # pgvector
-pip install -e ".[llm]"      # LLM validation summaries (langchain-openai)
+pip install -e ".[llm]"      # Azure OpenAI via langchain-openai
 ```
 
 ### 3) Configure environment variables
@@ -55,7 +55,13 @@ pip install -e ".[llm]"      # LLM validation summaries (langchain-openai)
 cp .env.example .env
 ```
 
-Update values in `.env` for your local environment.
+Update values in `.env` for your local environment. Azure OpenAI setup: [`docs/azure_openai.md`](docs/azure_openai.md).
+
+Opt-in deployment smoke (not CI):
+
+```bash
+RUN_AZURE_OPENAI_SMOKE=true python scripts/smoke_azure_openai.py
+```
 
 ## Run the API
 

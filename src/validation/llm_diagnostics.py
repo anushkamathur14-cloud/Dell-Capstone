@@ -1,14 +1,16 @@
 """Optional LLM diagnostics for validation reports.
 
 Produces diagnostics_summary after the decide node. Falls back to a deterministic
-template when ENABLE_VALIDATION_LLM is false or langchain-openai is unavailable.
+template when ENABLE_VALIDATION_LLM is false, Azure is not configured, or
+langchain-openai is unavailable. LLM text is narrative only; decision stays in code.
 """
 
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
+
+from src.llm.azure_factory import get_azure_chat_model, validation_llm_enabled
 
 
 def _template_summary(
@@ -40,20 +42,19 @@ def generate_diagnostics_summary(
 ) -> tuple[str, str]:
     """Return (summary, source) where source is 'llm' or 'template'."""
     if use_llm is None:
-        use_llm = bool(os.getenv("LANGCHAIN_API_KEY") or os.getenv("OPENAI_API_KEY"))
+        use_llm = validation_llm_enabled()
 
     if not use_llm:
         return _template_summary(decision, issues, warnings, checks), "template"
 
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
-        from langchain_openai import ChatOpenAI
     except ImportError:
         return _template_summary(decision, issues, warnings, checks), "template"
 
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LANGCHAIN_API_KEY")
-    model_name = os.getenv("VALIDATION_LLM_MODEL", "gpt-4o-mini")
-    llm = ChatOpenAI(model=model_name, temperature=0, api_key=api_key)
+    llm = get_azure_chat_model("validation", temperature=0.0)
+    if llm is None:
+        return _template_summary(decision, issues, warnings, checks), "template"
 
     payload = {
         "decision": decision,

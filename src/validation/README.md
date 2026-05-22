@@ -10,7 +10,7 @@ Deterministic rules used by the LangGraph validation agent. **Start with the ful
 | `benchmark_loader.py` | Load parquet benchmark tables by `experiment_id` |
 | `benchmark_checks.py` | Delegate to `synthetic_env/validation/checks.py` |
 | `world_spec_checks.py` | `configs/world_spec.yaml` constraints (warnings) |
-| `llm_diagnostics.py` | Human-readable summary (template or LLM) |
+| `llm_diagnostics.py` | Human-readable summary (template or Azure LLM via `src/llm/azure_factory.py`) |
 
 ## Quick usage
 
