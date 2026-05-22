@@ -11,12 +11,12 @@ Cloud deploy is **not automated in this repository** — follow the steps below 
 ### Start command
 
 ```bash
-PYTHONPATH=. uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
+PYTHONPATH=. python -m uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8080}
 ```
 
-Railway sets `PORT` automatically; bind to `0.0.0.0`. **`PYTHONPATH=.`** is required because imports use the `src.*` package prefix.
+Railway sets `PORT` automatically; bind to `0.0.0.0`. Use **`python -m uvicorn`** (not bare `uvicorn`) so the start command works even when the CLI is not on `PATH`. **`PYTHONPATH=.`** is required because imports use the `src.*` package prefix.
 
-This repo includes `railway.toml`, `nixpacks.toml`, and `railpack.json` so Railway/Nixpacks use the correct start command (the app is not at `main.py` in the repo root). If deploy still fails, paste **Deploy Logs** and confirm **Settings → Start command** matches the line above.
+This repo includes `requirements.txt` (→ `requirements-railway.txt`), `railway.toml`, `nixpacks.toml`, and `railpack.json`. If deploy still fails, check **Build Logs** for `pip install` and **Deploy Logs** for import errors; confirm **Settings → Start command** matches the line above.
 
 ### Install (Railway)
 

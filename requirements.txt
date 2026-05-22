@@ -1,0 +1,2 @@
+# Railway/Railpack auto-detect this file; production set lives in requirements-railway.txt.
+-r requirements-railway.txt
