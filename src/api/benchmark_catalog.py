@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -123,8 +124,10 @@ def get_run(run_id: str) -> dict[str, Any]:
             detail=f"No benchmark bundle for {run_id} under {root} (missing parquets or experiment row).",
         )
     exp_row = _jsonable_row(tables["experiments"].iloc[0].to_dict())
-    n_arms = len(tables["arms"])
-    n_metrics = len(tables["metrics_summary"])
+    arms_rows = [_jsonable_row(r) for r in tables["arms"].to_dict(orient="records")]
+    metrics_rows = [_jsonable_row(r) for r in tables["metrics_summary"].to_dict(orient="records")]
+    n_arms = len(arms_rows)
+    n_metrics = len(metrics_rows)
     n_obs = len(tables["observations"])
     memory_preview: str | None = None
     mem_path = root / "experiment_memory.parquet"
@@ -133,13 +136,28 @@ def get_run(run_id: str) -> dict[str, Any]:
         sub = mem_df[mem_df["experiment_id"].astype(str) == run_id]
         if not sub.empty and "summary_text" in sub.columns:
             memory_preview = str(sub.iloc[0].get("summary_text") or "")[:500] or None
+    traffic = exp_row.get("traffic_split")
+    if isinstance(traffic, str):
+        try:
+            traffic = json.loads(traffic)
+        except Exception:
+            traffic = None
     return {
         "run_id": run_id,
         "experiment_id": run_id,
         "source": "benchmark_parquet",
         "benchmark_data_dir": str(root),
         "experiment": exp_row,
+        "arms": arms_rows,
+        "metrics": metrics_rows,
         "counts": {"arms": n_arms, "metrics_summary": n_metrics, "observations": n_obs},
+        "analysis_preview": {
+            "variants_in_test": n_arms,
+            "metrics_rows": n_metrics,
+            "expected_ranking_candidates": n_metrics,
+            "total_observations": n_obs,
+            "traffic_split": traffic if isinstance(traffic, dict) else exp_row.get("traffic_split"),
+        },
         "memory_summary_preview": memory_preview,
         "note": "Registry snapshot from parquets; POST /orchestrate/{run_id} for full pipeline output.",
     }
