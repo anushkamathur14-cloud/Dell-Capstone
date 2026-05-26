@@ -4,6 +4,11 @@
 [build]
 builder = "DOCKERFILE"
 
+[env]
+# Use Lovable-wide CORS regex (preview + published). Override in UI only if debugging.
+CORS_FORCE_LOVABLE_REGEX = "true"
+CORS_ALLOW_ORIGINS = "*"
+
 [deploy]
 startCommand = "sh scripts/run_api_prod.sh"
 healthcheckPath = "/health"

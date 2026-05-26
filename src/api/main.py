@@ -23,27 +23,40 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0", lifespan=lifespan)
 app.include_router(catalog_router)
 
-# CORS: CORS_ALLOW_ORIGINS comma-list overrides; default regex covers all Lovable hosts.
-# See docs/DEPLOYMENT.md — adaptivegaming.lovable.app, preview--*.lovable.app,
-# *.lovableproject.com / .dev, plus local Vite.
+# CORS: default regex allows all Lovable preview + published hosts (see docs/DEPLOYMENT.md).
+# CORS_FORCE_LOVABLE_REGEX=true (default) ignores a narrow CORS_ALLOW_ORIGINS on Railway.
+_LOVABLE_ORIGIN_REGEX = (
+    r"^https://([a-z0-9-]+\.)*lovable(project)?\.(app|dev)$"
+    r"|^http://localhost(:\d+)?$"
+    r"|^http://127\.0\.0\.1(:\d+)?$"
+)
+# adaptivegaming Lovable project 4d5eac12-ab80-4245-8c16-10dcccd1e662 (explicit-list fallback)
+_ADAPTIVEGAMING_ORIGINS = frozenset(
+    {
+        "https://adaptivegaming.lovable.app",
+        "https://preview--4d5eac12-ab80-4245-8c16-10dcccd1e662.lovable.app",
+        "https://4d5eac12-ab80-4245-8c16-10dcccd1e662.lovableproject.com",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    }
+)
+
 _cors = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
-if _cors in ("", "*"):
-    _lovable_origin_regex = (
-        r"^https://([a-z0-9-]+\.)*lovable(project)?\.(app|dev)$"
-        r"|^http://localhost(:\d+)?$"
-        r"|^http://127\.0\.0\.1(:\d+)?$"
-    )
+_force_regex = os.getenv("CORS_FORCE_LOVABLE_REGEX", "true").lower() in {"1", "true", "yes"}
+
+if _force_regex or _cors in ("", "*"):
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=_lovable_origin_regex,
+        allow_origin_regex=_LOVABLE_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 else:
+    origins = {o.strip() for o in _cors.split(",") if o.strip()} | _ADAPTIVEGAMING_ORIGINS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[o.strip() for o in _cors.split(",") if o.strip()],
+        allow_origins=sorted(origins),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
