@@ -7,9 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.agent.orchestrator import AdaptiveExperimentationOrchestrator
 from src.agent.validation_agent import ValidationAgent
+from src.api.benchmark_catalog import router as catalog_router
 from src.skills.retrieval import RetrievalSkill
 
 app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0")
+app.include_router(catalog_router)
 
 # CORS: explicit comma-separated origins in CORS_ALLOW_ORIGINS, or default Lovable hosts
 # (avoids needing Railway Variables for first deploy).

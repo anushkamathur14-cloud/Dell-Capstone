@@ -39,6 +39,18 @@ curl -sS https://YOUR-RAILWAY-DOMAIN/health
 
 Expect `{"status":"ok"}` and HTTP **200**.
 
+## 5. Lovable dashboard — experiment registry (read-only)
+
+These read **`BENCHMARK_DATA_DIR`** (default `synthetic_env/benchmarks/generated_sanity_calibrated`) and expose parquet-backed IDs so the UI matches real benchmark experiments (not mock `exp_392` rows).
+
+| Method | Path | Purpose |
+|--------|------|--------|
+| `GET` | `/experiments` | All rows from `experiments.parquet` |
+| `GET` | `/runs` | Same IDs as `run_id` / `experiment_id` for wiring to `POST /orchestrate/{run_id}` |
+| `GET` | `/runs/{run_id}` | Snapshot: experiment row + arm/metric/observation counts + memory preview |
+
+**Note:** There is no persisted “orchestrate run history” server-side yet. `GET /runs` is a **registry view** over benchmark data; full pipeline output still comes from **`POST /orchestrate/{experiment_id}`**.
+
 ---
 
 ## Build failed (“left the wheelhouse”)
