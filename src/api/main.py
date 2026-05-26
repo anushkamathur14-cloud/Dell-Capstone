@@ -23,19 +23,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0", lifespan=lifespan)
 app.include_router(catalog_router)
 
-# CORS: explicit comma-separated origins in CORS_ALLOW_ORIGINS, or default Lovable hosts
-# (avoids needing Railway Variables for first deploy).
+# CORS: CORS_ALLOW_ORIGINS comma-list overrides; default regex covers all Lovable hosts.
+# See docs/DEPLOYMENT.md — adaptivegaming.lovable.app, preview--*.lovable.app,
+# *.lovableproject.com / .dev, plus local Vite.
 _cors = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
 if _cors in ("", "*"):
-    # Published app, preview URLs (id-preview--*.lovable.app), and lovableproject.com
-    _lovable_re = (
-        r"^https://(.+\.)?lovable\.app$"
-        r"|^https://(.+\.)?lovableproject\.com$"
-        r"|^https://(.+\.)?lovable\.dev$"
+    _lovable_origin_regex = (
+        r"^https://([a-z0-9-]+\.)*lovable(project)?\.(app|dev)$"
+        r"|^http://localhost(:\d+)?$"
+        r"|^http://127\.0\.0\.1(:\d+)?$"
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=_lovable_re,
+        allow_origin_regex=_lovable_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

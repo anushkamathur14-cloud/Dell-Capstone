@@ -23,13 +23,22 @@ Override in the Railway UI only if debugging.
 
 ## 3. CORS for Lovable
 
-If **`CORS_ALLOW_ORIGINS`** is **unset** or **`*`**, the API allows **`https://*.lovable.app`** and **`https://*.lovableproject.com`** (regex). Your app [https://adaptivegaming.lovable.app](https://adaptivegaming.lovable.app) is included.
+If **`CORS_ALLOW_ORIGINS`** is **unset** or **`*`**, the API uses a regex (in `src/api/main.py`) that allows:
 
-To lock down production, set:
+- `https://*.lovable.app` (published + `preview--…` editor URLs)
+- `https://*.lovableproject.com` and `https://*.lovableproject.dev`
+- `https://*.lovable.dev`
+- `http://localhost:*` and `http://127.0.0.1:*` (local Vite)
+
+[https://adaptivegaming.lovable.app](https://adaptivegaming.lovable.app) is included. After changing CORS, **redeploy Railway**, then use **Refresh** in the Lovable TopBar.
+
+To use an explicit allow-list on Railway instead of the regex:
 
 ```env
-CORS_ALLOW_ORIGINS=https://adaptivegaming.lovable.app
+CORS_ALLOW_ORIGINS=https://adaptivegaming.lovable.app,https://preview--YOUR-PREVIEW-ID.lovable.app,https://YOUR-ID.lovableproject.com,http://localhost:5173
 ```
+
+Replace preview / project IDs with the URLs shown in your Lovable project settings.
 
 ## 4. Smoke test
 
