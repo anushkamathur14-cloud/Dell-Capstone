@@ -43,6 +43,11 @@ Expect `{"status":"ok"}` and HTTP **200**.
 
 ## Build failed (“left the wheelhouse”)
 
-1. **Nixpacks** — `[phases.install]` must include **`"..."`** first so the Python provider still creates the venv / base install. Removing it breaks the image.
-2. **OOM / killed** — Railway builds use **`requirements-railway.txt`** (no Jupyter, matplotlib, or pytest). Avoid `pip install -e .` on small builders.
-3. In Railway, open **View build logs** and search for `Killed`, `No space`, or `ERROR`.
+Railway builds this repo with the **root `Dockerfile`** (`[build] builder = "DOCKERFILE"` in `railway.toml`), not Nixpacks, so installs are **`pip install -r requirements-railway.txt`** inside the image.
+
+1. Open **View build logs** and scroll to the **first `ERROR` / `failed` / `Killed`** line.
+2. Typical issues: **wheel compile** (the Dockerfile installs `build-essential`), **wrong root directory** in Railway (must be repo root with `Dockerfile`), or **private dependency** access.
+
+### Nixpacks (local only)
+
+`nixpacks.toml` is kept for optional local Nixpacks builds; Railway should **not** use it when the Dockerfile is present and `builder = "DOCKERFILE"` is set.

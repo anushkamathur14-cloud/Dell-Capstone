@@ -1,4 +1,4 @@
-# Pin Python for consistent wheels; install the package from pyproject.toml.
+# Local / alternate builder only. On Railway we use the root Dockerfile (see railway.toml).
 
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.11"

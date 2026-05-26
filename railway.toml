@@ -1,8 +1,8 @@
 # Bind to Railway $PORT — must match Networking → public domain port (often 8080).
-# If you set PORT=8080 in Variables, generate the domain with port 8080.
+# Build uses the root Dockerfile (reliable for heavy scientific Python deps).
 
 [build]
-builder = "nixpacks"
+builder = "DOCKERFILE"
 
 [deploy]
 startCommand = "sh scripts/run_api_prod.sh"

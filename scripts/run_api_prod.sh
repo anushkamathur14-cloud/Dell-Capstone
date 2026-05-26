@@ -3,5 +3,5 @@
 set -e
 PORT="${PORT:-8080}"
 export PORT
-export PYTHONPATH=.
+export PYTHONPATH="${PYTHONPATH:-.}"
 exec python -m uvicorn src.api.main:app --host 0.0.0.0 --port "$PORT"
