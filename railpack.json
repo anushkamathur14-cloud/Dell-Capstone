@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "install": {
+      "commands": ["pip install -e ."]
+    }
+  },
+  "deploy": {
+    "startCommand": "PYTHONPATH=. python -m uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT}"
+  }
+}

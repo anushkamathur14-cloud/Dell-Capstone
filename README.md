@@ -25,6 +25,7 @@ The project uses a modular, skill-based design with:
 
 Reference architecture: `docs/architecture.md`.
 Synthetic world blueprint: `docs/world_spec.md`.
+**Railway / Lovable (502, PORT, CORS):** [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Setup Instructions
 

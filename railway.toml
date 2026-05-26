@@ -1,0 +1,11 @@
+# Bind to Railway $PORT — must match Networking → public domain port (often 8080).
+# If you set PORT=8080 in Variables, generate the domain with port 8080.
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "PYTHONPATH=. python -m uvicorn src.api.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
