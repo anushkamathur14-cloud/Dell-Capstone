@@ -7,4 +7,4 @@ NIXPACKS_PYTHON_VERSION = "3.11"
 cmds = ["python -m pip install --upgrade pip", "python -m pip install -e ."]
 
 [start]
-cmd = "PYTHONPATH=. python -m uvicorn src.api.main:app --host 0.0.0.0 --port $PORT"
+cmd = "sh scripts/run_api_prod.sh"

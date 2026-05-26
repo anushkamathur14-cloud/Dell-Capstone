@@ -4,28 +4,32 @@ A **502** from `https://…up.railway.app` with `x-railway-fallback: true` usual
 
 ## 1. Port (required)
 
-1. Railway → **Variables** → set **`PORT`** to the same number you used when **Generate Domain** (e.g. **8080**).
-2. Redeploy. Deploy logs should show: `Uvicorn running on http://0.0.0.0:8080` (same as `PORT`).
+Railway’s **public domain port** must match the port **uvicorn listens on**.
 
-This repo’s `railway.toml` / `nixpacks.toml` start command uses **`$PORT`** so it always matches Railway.
+This repo runs **`scripts/run_api_prod.sh`**, which uses **`PORT` from the environment**, or **defaults to `8080`** if `PORT` is unset (fixes the usual 502 when the domain was generated with port **8080** but the app listened elsewhere).
 
-## 2. Start command (if you override in the UI)
+1. Prefer: **Variables** → set **`PORT=8080`** if your domain uses **8080** (recommended).
+2. Redeploy. Deploy logs should show: `Uvicorn running on http://0.0.0.0:8080` (or your `PORT`).
+
+## 2. Start command (repo default)
+
+`railway.toml` / `nixpacks.toml` / `railpack.json` use:
 
 ```bash
-PYTHONPATH=. python -m uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+sh scripts/run_api_prod.sh
 ```
 
-Use **`python -m uvicorn`** so the CLI does not depend on PATH.
+Override in the Railway UI only if debugging.
 
 ## 3. CORS for Lovable
 
-Set **Variables** on Railway:
+If **`CORS_ALLOW_ORIGINS`** is **unset** or **`*`**, the API allows **`https://*.lovable.app`** and **`https://*.lovableproject.com`** (regex). Your app [https://adaptivegaming.lovable.app](https://adaptivegaming.lovable.app) is included.
+
+To lock down production, set:
 
 ```env
 CORS_ALLOW_ORIGINS=https://adaptivegaming.lovable.app
 ```
-
-Add preview URLs if Lovable uses a different origin (comma-separated, no spaces).
 
 ## 4. Smoke test
 

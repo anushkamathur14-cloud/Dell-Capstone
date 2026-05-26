@@ -6,6 +6,6 @@
     }
   },
   "deploy": {
-    "startCommand": "PYTHONPATH=. python -m uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT}"
+    "startCommand": "sh scripts/run_api_prod.sh"
   }
 }

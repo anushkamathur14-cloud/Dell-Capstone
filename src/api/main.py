@@ -11,14 +11,30 @@ from src.skills.retrieval import RetrievalSkill
 
 app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0")
 
-_cors_origins = os.getenv("CORS_ALLOW_ORIGINS", "*")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[origin.strip() for origin in _cors_origins.split(",") if origin.strip()],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS: explicit comma-separated origins in CORS_ALLOW_ORIGINS, or default Lovable hosts
+# (avoids needing Railway Variables for first deploy).
+_cors = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+if _cors in ("", "*"):
+    _lovable_re = (
+        r"^https://[\w.-]+\.lovable\.app$"
+        r"|^https://[\w.-]+\.lovableproject\.com$"
+        r"|^https://[\w.-]+\.lovable\.dev$"
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=_lovable_re,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in _cors.split(",") if o.strip()],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 @app.get("/")
