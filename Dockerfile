@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 COPY . .
 
-RUN chmod +x scripts/run_api_prod.sh
+RUN mkdir -p /app/data \
+    && chmod +x scripts/run_api_prod.sh
 
 EXPOSE 8080
 CMD ["sh", "scripts/run_api_prod.sh"]

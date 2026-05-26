@@ -1,7 +1,12 @@
 """Demo-grade persistence for ``POST /orchestrate`` (SQLite file, no Postgres required).
 
-Data lives under ``RUN_HISTORY_DB`` (default ``data/demo_orchestrate.sqlite``). On Railway
-without a volume the file is **ephemeral** (cleared on redeploy) — fine for demos.
+Path resolution (first match wins):
+
+1. **`RUN_HISTORY_DB`** — explicit file path (recommended if you use a non-default mount).
+2. **`RAILWAY_VOLUME_MOUNT_PATH`** — Railway injects this when a volume is attached; we store
+   ``{mount}/demo_orchestrate.sqlite`` so history survives redeploys.
+3. Default: ``data/demo_orchestrate.sqlite`` under the app working directory (ephemeral on Railway
+   without a volume).
 """
 
 from __future__ import annotations
@@ -24,8 +29,14 @@ _UUID_RE = re.compile(
 
 
 def db_path() -> Path:
-    raw = os.getenv("RUN_HISTORY_DB", "data/demo_orchestrate.sqlite")
-    return Path(raw)
+    """SQLite file for orchestrate run history."""
+    explicit = os.getenv("RUN_HISTORY_DB")
+    if explicit:
+        return Path(explicit)
+    mount = os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
+    if mount:
+        return Path(mount) / "demo_orchestrate.sqlite"
+    return Path("data/demo_orchestrate.sqlite")
 
 
 def init_db() -> None:

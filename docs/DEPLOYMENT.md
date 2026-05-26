@@ -50,7 +50,19 @@ These read **`BENCHMARK_DATA_DIR`** (default `synthetic_env/benchmarks/generated
 | `GET` | `/runs/{run_id}` | UUID → saved orchestrate payload; otherwise → benchmark snapshot (as before) |
 | `POST` | `/orchestrate/{experiment_id}` | Full pipeline; response includes **`run_record_id`** (SQLite row) |
 
-**Demo persistence:** each successful **`POST /orchestrate`** is stored under **`RUN_HISTORY_DB`** (default `data/demo_orchestrate.sqlite`). Failures are stored with `status=failed` and `run_record_id` in the **500** `detail`. On Railway without a disk volume, the DB resets on redeploy — fine for demos; use a mounted volume or Postgres for production.
+**Demo persistence:** each **`POST /orchestrate`** is stored in SQLite. Failures get `status=failed` and **`run_record_id`** in the **500** `detail`.
+
+### Persistent history on Railway (volume)
+
+Volumes are created in the [Railway dashboard](https://docs.railway.com/volumes) (not in `railway.toml`).
+
+1. Open your **Dell-Capstone** service → **Settings** → **Volumes** → **Add volume**.
+2. Set **Mount path** to **`/app/data`** (matches `WORKDIR /app` in the Dockerfile and relative `data/` in the repo).
+3. Redeploy. Railway sets **`RAILWAY_VOLUME_MOUNT_PATH`** at runtime; the API will write **`demo_orchestrate.sqlite`** inside that mount, so orchestrate history **survives redeploys**.
+
+Optional: set **`RUN_HISTORY_DB=/app/data/demo_orchestrate.sqlite`** explicitly (same result if the mount is `/app/data`).
+
+Without a volume, the DB still defaults to `./data/…` inside the container and is **ephemeral** when the container is recreated.
 
 ---
 
