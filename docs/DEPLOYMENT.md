@@ -54,15 +54,23 @@ These read **`BENCHMARK_DATA_DIR`** (default `synthetic_env/benchmarks/generated
 
 ### Persistent history on Railway (volume)
 
-Volumes are created in the [Railway dashboard](https://docs.railway.com/volumes) (not in `railway.toml`).
+Railway does **not** call the feature “Volume” inside every screen — it’s a **separate resource** you add from the **project graph** (canvas) or the **command palette**, then attach to your service.
 
-1. Open your **Dell-Capstone** service → **Settings** → **Volumes** → **Add volume**.
-2. Set **Mount path** to **`/app/data`** (matches `WORKDIR /app` in the Dockerfile and relative `data/` in the repo).
-3. Redeploy. Railway sets **`RAILWAY_VOLUME_MOUNT_PATH`** at runtime; the API will write **`demo_orchestrate.sqlite`** inside that mount, so orchestrate history **survives redeploys**.
+**Ways to create one (pick one):**
 
-Optional: set **`RUN_HISTORY_DB=/app/data/demo_orchestrate.sqlite`** explicitly (same result if the mount is `/app/data`).
+1. **Command palette** — Press **`⌘K`** (Mac) or **`Ctrl+K`** (Windows) → search **volume** / **create volume** → follow prompts and choose your **Dell-Capstone** service → set mount path **`/app/data`**.
+2. **Canvas** — On the project board, **right‑click empty space** or your **service** → look for **Create volume** / **Attach volume** (wording varies slightly by UI version).
+3. **Service settings** — On some layouts: open the service → **Settings** → scroll for **Volumes** / **Disk** / **Storage** and **Add**.
 
-Without a volume, the DB still defaults to `./data/…` inside the container and is **ephemeral** when the container is recreated.
+Mount path should be **`/app/data`** so it lines up with `WORKDIR /app` in the Dockerfile. After attach + redeploy, Railway sets **`RAILWAY_VOLUME_MOUNT_PATH`** and this app will write **`demo_orchestrate.sqlite`** there.
+
+**If you never see volumes at all:** your workspace may be on a plan or product surface that doesn’t include block storage. Then either stay with **ephemeral** SQLite (fine for demos) or use **Railway Postgres** later and we can point history at `DATABASE_URL` instead.
+
+Optional explicit path (same as auto when mount is `/app/data`):
+
+```env
+RUN_HISTORY_DB=/app/data/demo_orchestrate.sqlite
+```
 
 ---
 
