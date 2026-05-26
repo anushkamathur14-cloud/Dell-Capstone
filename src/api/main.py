@@ -2,6 +2,7 @@
 
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,10 +27,11 @@ app.include_router(catalog_router)
 # (avoids needing Railway Variables for first deploy).
 _cors = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
 if _cors in ("", "*"):
+    # Published app, preview URLs (id-preview--*.lovable.app), and lovableproject.com
     _lovable_re = (
-        r"^https://[\w.-]+\.lovable\.app$"
-        r"|^https://[\w.-]+\.lovableproject\.com$"
-        r"|^https://[\w.-]+\.lovable\.dev$"
+        r"^https://(.+\.)?lovable\.app$"
+        r"|^https://(.+\.)?lovableproject\.com$"
+        r"|^https://(.+\.)?lovable\.dev$"
     )
     app.add_middleware(
         CORSMiddleware,
@@ -55,7 +57,15 @@ def root() -> dict:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok"}
+    from src.api.orchestrate_history import db_path
+
+    bdir = Path(_validation_runtime_options()["benchmark_dir"])
+    return {
+        "status": "ok",
+        "benchmark_data_dir": str(bdir),
+        "benchmark_parquets_ready": (bdir / "experiments.parquet").exists(),
+        "run_history_db": str(db_path()),
+    }
 
 
 def _validation_runtime_options() -> dict:
