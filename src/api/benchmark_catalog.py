@@ -62,41 +62,54 @@ def list_experiments() -> dict[str, Any]:
 
 @router.get("/runs")
 def list_runs() -> dict[str, Any]:
-    """Run-shaped view over the benchmark registry (no server-side orchestrate history).
+    """Benchmark registry rows plus **persisted** ``POST /orchestrate`` history (demo SQLite).
 
-    Each row uses ``experiment_id`` as ``run_id`` so Lovable can call
-    ``POST /orchestrate/{run_id}`` with IDs that exist in the bundle.
+    - ``runs``: parquet-backed IDs you can orchestrate.
+    - ``orchestrations``: recent server-side orchestrate calls (see ``run_record_id`` on POST body).
     """
+    from src.api.orchestrate_history import list_orchestration_summaries
+
     root = _benchmark_dir()
     path = root / "experiments.parquet"
-    if not path.exists():
-        return {"benchmark_data_dir": str(root), "runs": [], "source": "none"}
-    df = pd.read_parquet(path)
-    runs: list[dict[str, Any]] = []
-    for row in df.to_dict(orient="records"):
-        jr = _jsonable_row(row)
-        eid = str(jr.get("experiment_id", "") or "")
-        runs.append(
-            {
-                "run_id": eid,
-                "experiment_id": eid,
-                "status": "registry",
-                "objective": jr.get("objective"),
-                "experiment_status": jr.get("status"),
-                "note": "Benchmark registry row; POST /orchestrate/{run_id} to execute the full pipeline.",
-            }
-        )
+    reg_runs: list[dict[str, Any]] = []
+    if path.exists():
+        df = pd.read_parquet(path)
+        for row in df.to_dict(orient="records"):
+            jr = _jsonable_row(row)
+            eid = str(jr.get("experiment_id", "") or "")
+            reg_runs.append(
+                {
+                    "run_id": eid,
+                    "experiment_id": eid,
+                    "status": "registry",
+                    "objective": jr.get("objective"),
+                    "experiment_status": jr.get("status"),
+                    "kind": "benchmark_registry",
+                    "note": "Benchmark registry row; POST /orchestrate/{run_id} to execute the full pipeline.",
+                }
+            )
+    bundle_ready = all((root / f"{n}.parquet").exists() for n in BENCHMARK_TABLES)
+    orchestrations = list_orchestration_summaries(limit=100)
     return {
         "benchmark_data_dir": str(root),
-        "runs": runs,
-        "source": "benchmark_registry",
-        "bundle_ready": all((root / f"{n}.parquet").exists() for n in BENCHMARK_TABLES),
+        "runs": reg_runs,
+        "orchestrations": orchestrations,
+        "source": "benchmark_registry+demo_history",
+        "bundle_ready": bundle_ready,
     }
 
 
 @router.get("/runs/{run_id}")
 def get_run(run_id: str) -> dict[str, Any]:
-    """Snapshot for one experiment: parquet-backed context when the full bundle exists."""
+    """If ``run_id`` is a UUID, return a persisted orchestrate row; else benchmark parquet snapshot."""
+    from src.api.orchestrate_history import get_orchestration_detail, is_persisted_run_id
+
+    if is_persisted_run_id(run_id):
+        detail = get_orchestration_detail(run_id)
+        if detail is not None:
+            return detail
+        raise HTTPException(status_code=404, detail=f"No orchestration record: {run_id}")
+
     root = _benchmark_dir()
     tables = load_benchmark_tables(root, experiment_id=run_id)
     if tables is None:

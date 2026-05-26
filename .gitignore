@@ -16,6 +16,9 @@ htmlcov/
 .venv/
 venv/
 
+# Demo orchestrate history (SQLite)
+data/*.sqlite
+
 # Env files
 .env
 .env.*

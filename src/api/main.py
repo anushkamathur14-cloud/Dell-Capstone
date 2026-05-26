@@ -1,16 +1,25 @@
 """FastAPI app stub."""
 
 import os
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.agent.orchestrator import AdaptiveExperimentationOrchestrator
 from src.agent.validation_agent import ValidationAgent
 from src.api.benchmark_catalog import router as catalog_router
+from src.api.orchestrate_history import init_db
 from src.skills.retrieval import RetrievalSkill
 
-app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0", lifespan=lifespan)
 app.include_router(catalog_router)
 
 # CORS: explicit comma-separated origins in CORS_ALLOW_ORIGINS, or default Lovable hosts
@@ -70,16 +79,36 @@ def validate(experiment_id: str, objective: str = "day7_retention") -> dict:
 
 
 @app.post("/orchestrate/{experiment_id}")
-def orchestrate(experiment_id: str, objective: str) -> dict:
-    orchestrator = AdaptiveExperimentationOrchestrator()
-    result = orchestrator.run(objective=objective, experiment_id=experiment_id)
-    return {
-        "schema_version": result.schema_version,
-        "experiment": result.experiment.model_dump(),
-        "memory": result.memory.model_dump(),
-        "metrics": [metric.model_dump() for metric in result.metrics],
-        "validation_report": result.validation_report,
-        "evaluation": result.evaluation,
-        "candidates": result.candidates,
-        "recommendation": result.recommendation,
-    }
+def orchestrate(experiment_id: str, objective: str = "improve_retention") -> dict:
+    from src.api.orchestrate_history import record_orchestrate_failure, record_orchestrate_success
+
+    try:
+        orchestrator = AdaptiveExperimentationOrchestrator()
+        result = orchestrator.run(objective=objective, experiment_id=experiment_id)
+        payload = {
+            "schema_version": result.schema_version,
+            "experiment": result.experiment.model_dump(),
+            "memory": result.memory.model_dump(),
+            "metrics": [metric.model_dump() for metric in result.metrics],
+            "validation_report": result.validation_report,
+            "evaluation": result.evaluation,
+            "candidates": result.candidates,
+            "recommendation": result.recommendation,
+        }
+        rid = record_orchestrate_success(
+            experiment_id=experiment_id,
+            objective=objective,
+            response=payload,
+        )
+        payload["run_record_id"] = rid
+        return payload
+    except Exception as exc:  # noqa: BLE001 — demo: persist failure then surface error
+        rid = record_orchestrate_failure(
+            experiment_id=experiment_id,
+            objective=objective,
+            error=str(exc),
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"message": str(exc), "run_record_id": rid},
+        ) from exc

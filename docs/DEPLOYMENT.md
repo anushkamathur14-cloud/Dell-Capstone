@@ -46,10 +46,11 @@ These read **`BENCHMARK_DATA_DIR`** (default `synthetic_env/benchmarks/generated
 | Method | Path | Purpose |
 |--------|------|--------|
 | `GET` | `/experiments` | All rows from `experiments.parquet` |
-| `GET` | `/runs` | Same IDs as `run_id` / `experiment_id` for wiring to `POST /orchestrate/{run_id}` |
-| `GET` | `/runs/{run_id}` | Snapshot: experiment row + arm/metric/observation counts + memory preview |
+| `GET` | `/runs` | **Registry** (`runs`) + **demo orchestrate history** (`orchestrations`, last 100) |
+| `GET` | `/runs/{run_id}` | UUID → saved orchestrate payload; otherwise → benchmark snapshot (as before) |
+| `POST` | `/orchestrate/{experiment_id}` | Full pipeline; response includes **`run_record_id`** (SQLite row) |
 
-**Note:** There is no persisted “orchestrate run history” server-side yet. `GET /runs` is a **registry view** over benchmark data; full pipeline output still comes from **`POST /orchestrate/{experiment_id}`**.
+**Demo persistence:** each successful **`POST /orchestrate`** is stored under **`RUN_HISTORY_DB`** (default `data/demo_orchestrate.sqlite`). Failures are stored with `status=failed` and `run_record_id` in the **500** `detail`. On Railway without a disk volume, the DB resets on redeploy — fine for demos; use a mounted volume or Postgres for production.
 
 ---
 
