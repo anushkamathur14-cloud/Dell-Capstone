@@ -3,12 +3,22 @@
 import os
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.agent.orchestrator import AdaptiveExperimentationOrchestrator
-from src.agent.validation_agent import DEFAULT_BENCHMARK_DIR, ValidationAgent
+from src.agent.validation_agent import ValidationAgent
 from src.skills.retrieval import RetrievalSkill
 
 app = FastAPI(title="Adaptive Experimentation Agent", version="0.1.0")
+
+_cors_origins = os.getenv("CORS_ALLOW_ORIGINS", "*")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in _cors_origins.split(",") if origin.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -46,6 +56,7 @@ def orchestrate(experiment_id: str, objective: str) -> dict:
     orchestrator = AdaptiveExperimentationOrchestrator()
     result = orchestrator.run(objective=objective, experiment_id=experiment_id)
     return {
+        "schema_version": result.schema_version,
         "experiment": result.experiment.model_dump(),
         "memory": result.memory.model_dump(),
         "metrics": [metric.model_dump() for metric in result.metrics],
