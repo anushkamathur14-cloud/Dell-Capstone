@@ -26,7 +26,8 @@ app.include_router(catalog_router)
 # CORS: default regex allows all Lovable preview + published hosts (see docs/DEPLOYMENT.md).
 # CORS_FORCE_LOVABLE_REGEX=true (default) ignores a narrow CORS_ALLOW_ORIGINS on Railway.
 _LOVABLE_ORIGIN_REGEX = (
-    r"^https://([a-z0-9-]+\.)*lovable(project)?\.(app|dev)$"
+    r"^https://([a-z0-9-]+\.)*lovable\.(app|dev)$"
+    r"|^https://([a-z0-9-]+\.)*lovableproject\.com$"
     r"|^http://localhost(:\d+)?$"
     r"|^http://127\.0\.0\.1(:\d+)?$"
 )
