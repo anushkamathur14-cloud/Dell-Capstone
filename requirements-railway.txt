@@ -1,0 +1,21 @@
+# Slim production install (no Jupyter/matplotlib/pytest) — avoids Railway build OOM.
+# App code is loaded via PYTHONPATH=. (see scripts/run_api_prod.sh).
+langgraph
+langchain
+langchain-openai
+langsmith
+fastapi
+uvicorn[standard]
+pydantic>=2.0
+pydantic-settings
+sqlalchemy
+asyncpg
+psycopg2-binary
+numpy
+pandas
+pyarrow
+polars
+scipy
+statsmodels
+scikit-learn
+pyyaml

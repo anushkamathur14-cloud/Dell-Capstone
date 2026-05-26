@@ -3,8 +3,9 @@
 [variables]
 NIXPACKS_PYTHON_VERSION = "3.11"
 
+# "..." keeps the Python provider’s install (venv, pip base); then add slim deps only.
 [phases.install]
-cmds = ["python -m pip install --upgrade pip", "python -m pip install -e ."]
+cmds = ["...", "python -m pip install --upgrade pip", "python -m pip install -r requirements-railway.txt"]
 
 [start]
 cmd = "sh scripts/run_api_prod.sh"

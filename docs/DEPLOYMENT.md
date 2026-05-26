@@ -38,3 +38,11 @@ curl -sS https://YOUR-RAILWAY-DOMAIN/health
 ```
 
 Expect `{"status":"ok"}` and HTTP **200**.
+
+---
+
+## Build failed (“left the wheelhouse”)
+
+1. **Nixpacks** — `[phases.install]` must include **`"..."`** first so the Python provider still creates the venv / base install. Removing it breaks the image.
+2. **OOM / killed** — Railway builds use **`requirements-railway.txt`** (no Jupyter, matplotlib, or pytest). Avoid `pip install -e .` on small builders.
+3. In Railway, open **View build logs** and search for `Killed`, `No space`, or `ERROR`.
