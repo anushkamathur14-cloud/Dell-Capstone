@@ -1,0 +1,20 @@
+# Production API for Railway (slim — no Jupyter/matplotlib/pytest). See nixpacks.toml.
+langgraph
+langchain
+langchain-openai
+langsmith
+fastapi
+uvicorn[standard]
+pydantic>=2.0
+pydantic-settings
+sqlalchemy
+asyncpg
+psycopg2-binary
+numpy
+pandas
+pyarrow
+polars
+scipy
+statsmodels
+scikit-learn
+pyyaml
